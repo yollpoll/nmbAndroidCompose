@@ -1,0 +1,7 @@
+dependencies{
+    api('io.github.yollpoll:framework:0.0.6@aar') {
+        changing = true
+        transitive = true
+    }
+    kapt 'io.github.yollpoll:kapt:0.0.2'
+}
