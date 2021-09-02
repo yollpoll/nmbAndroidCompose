@@ -2,11 +2,10 @@ package com.example.nmbcompose.bean
 
 import com.squareup.moshi.JsonClass
 
-@JsonClass(generateAdapter = true)
 class ForumList : ArrayList<Forum>()
 
+
 //板块
-@JsonClass(generateAdapter = true)
 data class Forum(
     val forums: List<ForumDetail>,
     val id: String,
@@ -16,16 +15,15 @@ data class Forum(
 )
 
 //详细版本
-@JsonClass(generateAdapter = true)
 data class ForumDetail(
-    val createdAt: String,
-    val fgroup: String,
+    var createdAt: String? = null,
+    var fgroup: String?,
     val id: String,
-    val interval: String,
-    val msg: String,
-    val name: String,
-    val showName: String,
-    val sort: String,
-    val status: String,
-    val updateAt: String
+    var interval: String?,
+    var msg: String?,
+    var name: String?,
+    var showName: String?,
+    var sort: String?,
+    var status: String?,
+    var updateAt: String?
 )

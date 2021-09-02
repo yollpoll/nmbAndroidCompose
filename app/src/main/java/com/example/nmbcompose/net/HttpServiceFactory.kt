@@ -18,6 +18,7 @@ public val launcherRetrofitFactory by lazy {
         }
 
         override fun okHttpClientBuilder(builder: OkHttpClient.Builder) {
+            builder.addInterceptor(CoverImgInterceptor())
         }
 
 
@@ -25,7 +26,7 @@ public val launcherRetrofitFactory by lazy {
         }
 
         override fun retrofitBuilder(builder: Retrofit.Builder) {
-            builder.addConverterFactory(MoshiConverterFactory.create())
+//            builder.addConverterFactory(MoshiConverterFactory.create())
         }
 
     })
@@ -41,6 +42,7 @@ public val commonRetrofitFactory by lazy {
         }
 
         override fun okHttpClientBuilder(builder: OkHttpClient.Builder) {
+            builder.addInterceptor(CoverImgInterceptor())
         }
 
 
@@ -48,8 +50,9 @@ public val commonRetrofitFactory by lazy {
         }
 
         override fun retrofitBuilder(builder: Retrofit.Builder) {
-            builder.addConverterFactory(MoshiConverterFactory.create())
+//            builder.addConverterFactory(MoshiConverterFactory.create())
         }
 
     })
+
 }

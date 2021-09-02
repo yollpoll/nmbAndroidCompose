@@ -7,6 +7,7 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.nmbcompose.bean.Forum
+import com.example.nmbcompose.bean.ForumDetail
 import com.example.nmbcompose.bean.ForumList
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
@@ -14,6 +15,9 @@ import com.example.nmbcompose.di.HomeRepositoryAnnotation
 import com.example.nmbcompose.repository.HomeRepository
 import com.squareup.moshi.JsonClass
 import com.yollpoll.framework.extend.getBean
+import com.yollpoll.framework.extend.getList
+import com.yollpoll.framework.extend.getString
+import com.yollpoll.framework.extend.toListBean
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +35,7 @@ import javax.inject.Inject
 //关于hilt，如果在
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext val context: Context,
     val repository: HomeRepository
 ) :
     BaseViewModel<HomeAction, HomeState>(HomeState(), context) {
@@ -46,7 +50,11 @@ class HomeViewModel @Inject constructor(
 
     fun loadForumList() {
         viewModelScope.launch(Dispatchers.IO) {
-            viewState.value.forumList = repository.getForumList()
+            try {
+                viewState.value.forumList = getList(KEY_FORUM_LIST)
+            } catch (e: Exception) {
+                Log.d(TAG, "loadForumList: ${e.message}")
+            }
         }
     }
 
@@ -54,6 +62,8 @@ class HomeViewModel @Inject constructor(
 }
 
 @JsonClass(generateAdapter = true)
-data class HomeState(var forumList: ArrayList<Forum> = arrayListOf()) : BaseViewState()
+data class HomeState(var forumList: List<Forum>? = arrayListOf()) : BaseViewState()
 
-sealed class HomeAction : BaseUiAction()
+sealed class HomeAction : BaseUiAction() {
+    class OnForumSelect(val forum: ForumDetail) : HomeAction()
+}

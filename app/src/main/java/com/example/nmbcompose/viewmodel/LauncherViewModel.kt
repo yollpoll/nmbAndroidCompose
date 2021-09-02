@@ -10,21 +10,21 @@ import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumList
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
+import com.example.nmbcompose.net.FORUM_LIST
 import com.example.nmbcompose.net.launcherRetrofitFactory
 import com.example.nmbcompose.repository.LauncherRepository
-import com.example.nmbcompose.ui.screen.ForumList
 import com.example.nmbcompose.util.launcherText
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.yollpoll.framework.extend.saveBean
-import com.yollpoll.framework.extend.saveStringToDataStore
-import com.yollpoll.framework.extend.toJson
+import com.yollpoll.framework.extend.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.log
 
@@ -36,31 +36,41 @@ class LauncherViewModel @Inject constructor(
     BaseViewModel<LauncherUiAction, LauncherState>(LauncherState(launcherText), context) {
 
     init {
-        getRealUrl()
+        initData()
     }
 
     /**
      * 获取真实url
      */
-    private fun getRealUrl() {
+    private fun initData() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.loadRealUrl()
-            event.send(OneShotEvent.NavigateTo)
+            try {
+                repository.loadRealUrl()
+                async { refreshCover() }
+                getForumList()
+                event.send(OneShotEvent.NavigateTo)
+            } catch (e: Exception) {
+                Log.d(TAG, "getRealUrl error: ${e.message}")
+            }
         }
+    }
+
+    /**
+     * 获取封面真实地址
+     */
+    private suspend fun refreshCover() {
+        repository.refreshCover()
     }
 
     /**
      * 板块列表
      */
     private suspend fun getForumList() {
-        var json: String = ""
         try {
-            var bean = repository.getForumList()
-
+            val list = repository.getForumList()
+            saveList(KEY_FORUM_LIST, list)
         } catch (e: Exception) {
-            Log.d(TAG, "getForumList: ${e.message}")
-        } finally {
-            Log.d(TAG, "getForumList: finally $json")
+            Log.d(TAG, "getForumList error: ${e.message}")
         }
     }
 

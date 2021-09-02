@@ -15,18 +15,23 @@ import javax.inject.Inject
 class LauncherRepository @Inject constructor(
     @LauncherRetrofitFactory val retrofitFactory: RetrofitFactory
 ) : IRepository {
-    val service = retrofitFactory.createService(HttpService::class.java)
+    private val service by lazy {
+        retrofitFactory.createService(HttpService::class.java)
+    }
 
     @Throws(Exception::class)
     suspend fun loadRealUrl() {
-        val url = service.getRealUrl()
         try {
+            val url = service.getRealUrl()
             realUrl = url[0]
         } catch (e: Exception) {
-            throw Exception("获取真实url失败")
+            throw Exception("获取真实url失败:${e.message}")
         }
     }
 
     suspend fun getForumList() = service.getForumList()
+
+    //获取封面真实地址
+    suspend fun refreshCover() = service.refreshCover()
 
 }

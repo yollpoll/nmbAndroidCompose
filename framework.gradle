@@ -1,5 +1,5 @@
 dependencies{
-    api('io.github.yollpoll:framework:0.0.6@aar') {
+    api('io.github.yollpoll:framework:0.0.8@aar') {
         changing = true
         transitive = true
     }
