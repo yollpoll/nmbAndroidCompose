@@ -24,6 +24,7 @@ class LauncherRepository @Inject constructor(
         try {
             val url = service.getRealUrl()
             realUrl = url[0]
+            Log.d(TAG, "loadRealUrl: $realUrl")
         } catch (e: Exception) {
             throw Exception("获取真实url失败:${e.message}")
         }

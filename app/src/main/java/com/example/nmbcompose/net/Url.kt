@@ -16,7 +16,7 @@ const val IMG_URL = "/image/"
 const val FORUM_LIST = "Api/getForumList"
 
 //获取串
-const val GET_ARTICLE = "Api/showf"
+const val GET_ARTICLE = "Api/showf/"
 const val GET_CHILD_ARTICLE = "Api/thread"
 const val GET_COOKIE = "/Api/getCookie"
 
@@ -30,9 +30,10 @@ const val DEL_COLLECTION: String = "/Api/delFeed"
 
 //时间线
 //    public static final String TIME_LINE = "Api/timeline";
-const val TIME_LINE: String = "/Api/timeline"
+const val TIME_LINE: String = "Api/timeline"
 
-//重定向以后的图片地址
 var realUrl: String? = null//重定向以后获取到的根url
-var imgUrl = realUrl + IMG_URL
-var imgThumbUrl = realUrl + IMG_THUMB_URL
+
+var imagHead = "https://nmbimg.fastmirror.org/"//应该动态获取
+var imgUrl = imagHead + IMG_URL
+var imgThumbUrl = imagHead + IMG_THUMB_URL

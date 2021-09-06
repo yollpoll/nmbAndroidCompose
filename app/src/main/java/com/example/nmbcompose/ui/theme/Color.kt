@@ -13,7 +13,8 @@ val primary = Color(0xFF30cdd0)
 val primaryVariant = Color(0xFF30cdd0)
 val secondary = Color(0xFF6b38fb)
 
-val textColor = Color(0xFF004D40)
+val textColor = Color(0xFF000000)
+val textColorDeep = Color(0xFFFFFFFF)
 
 val black = Color(0xFF000000)
-val white= Color(0xFFFFFFFF)
+val white = Color(0xFFFFFFFF)

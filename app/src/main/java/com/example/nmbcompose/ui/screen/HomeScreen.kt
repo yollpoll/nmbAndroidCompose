@@ -1,10 +1,13 @@
 package com.example.nmbcompose.ui.screen
 
+import android.text.TextUtils
 import android.util.Log
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -15,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
+import androidx.compose.runtime.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -24,20 +28,32 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.Pager
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
+import com.example.nmbcompose.bean.Article
+import com.example.nmbcompose.bean.ArticleItem
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumDetail
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.net.COVER
+import com.example.nmbcompose.net.imgThumbUrl
 import com.example.nmbcompose.net.realCover
 import com.example.nmbcompose.ui.theme.black
 import com.example.nmbcompose.ui.theme.primary
 import com.example.nmbcompose.ui.theme.textColor
+import com.example.nmbcompose.ui.widget.EmptyDataView
 import com.example.nmbcompose.ui.widget.TitleBar
 import com.example.nmbcompose.viewmodel.*
 import com.google.accompanist.coil.rememberCoilPainter
@@ -60,13 +76,13 @@ fun HomeScreenView(viewModel: HomeViewModel) {
         drawerContent = {
             viewState.value.forumList?.apply {
                 DrawerContent(this) {
-                    viewModel.onAction(HomeAction.OnForumSelect(it))
+                    viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
                 }
             }
         },
         scaffoldState = state,
         topBar = {
-            TitleBar(text = "匿名板块", showMenu = true) {
+            TitleBar(text = "匿名板", showMenu = true) {
                 scope.launch {
                     if (state.drawerState.isOpen) {
                         state.drawerState.close()
@@ -79,7 +95,7 @@ fun HomeScreenView(viewModel: HomeViewModel) {
         drawerContentColor = contentColorFor(MaterialTheme.colors.background),
 //        drawerShape = DrawerShape(),
     ) {
-        HomeView()
+        HomeView(viewState.value.threadPager)
     }
 }
 
@@ -261,10 +277,111 @@ fun ForumDetailCard(forumDetail: ForumDetail, onClick: () -> Unit) {
 }
 
 
+//////////////////主内容//////////////////
+
+
 /**
  * 主内容
  */
-@Preview
 @Composable
-fun HomeView() {
+fun HomeView(pager: Pager<Int, ArticleItem>) {
+    ThreadList(pager = pager)
+}
+
+/**
+ * 串列表
+ */
+@Composable
+fun ThreadList(pager: Pager<Int, ArticleItem>) {
+    val threadItems = pager.flow.collectAsLazyPagingItems()
+    LazyColumn {
+        items(threadItems) { item ->
+            if (item == null) {
+                ThreadPlaceHolder()
+            } else {
+                ThreadItem(item) {
+                    //点击事件
+                }
+            }
+        }
+    }
+}
+
+/**
+ * item
+ */
+@Composable
+fun ThreadItem(item: ArticleItem, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .requiredHeightIn(min = 100.dp, max = 200.dp)
+            .padding(all = 10.dp)
+            .clickable { onClick.invoke() }
+
+    ) {
+        Row {
+            item.apply {
+                if (!img.isNullOrEmpty()) {
+                    Image(
+                        painter = rememberCoilPainter(
+                            request = "${imgThumbUrl}${item.img}${item.ext}",
+                            fadeIn = true
+                        ),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(100.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            Column(
+                Modifier
+                    .padding(all = 10.dp)
+            ) {
+                //使用textview
+                Text(text = item.title)
+                Text(text = item.userid, color = item.let {
+                    if (it.admin == "0") {
+                        return@let Color.DarkGray
+                    } else {
+                        return@let Color.Red
+                    }
+                })
+                AndroidView(
+                    factory = { context ->
+                        val tvContent = TextView(context)
+                        tvContent.maxLines = 10
+                        tvContent.ellipsize = TextUtils.TruncateAt.END
+                        return@AndroidView tvContent
+                    },
+                    update = {
+                        it.text =
+                            HtmlCompat.fromHtml(item.content, HtmlCompat.FROM_HTML_MODE_COMPACT)
+                    }
+                )
+            }
+        }
+
+    }
+}
+
+/**
+ * 空白占位符
+ */
+@Composable
+fun ThreadPlaceHolder() {
+    Card {
+        Surface {
+            Column(Modifier.height(100.dp)) {
+                Image(
+                    painter = painterResource(com.example.nmbcompose.R.mipmap.ic_launcher_round),
+                    contentDescription = "place holder"
+                )
+            }
+        }
+    }
+
 }

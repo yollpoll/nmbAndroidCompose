@@ -74,6 +74,8 @@ dependencies {
     // Kotlin
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+    //paging compose
+    implementation "androidx.paging:paging-compose:1.0.0-alpha12"
     //viewModel compose
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07"
     //live compose
@@ -93,6 +95,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-insets:$accompanist_version"
     implementation "com.google.accompanist:accompanist-insets-ui:$accompanist_version"
     implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+
 
 }
 apply from: "../framework.gradle"

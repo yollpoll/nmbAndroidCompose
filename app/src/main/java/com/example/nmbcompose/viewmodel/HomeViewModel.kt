@@ -6,12 +6,16 @@ import androidx.hilt.Assisted
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.example.nmbcompose.bean.Forum
-import com.example.nmbcompose.bean.ForumDetail
-import com.example.nmbcompose.bean.ForumList
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.nmbcompose.bean.*
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.di.HomeRepositoryAnnotation
+import com.example.nmbcompose.paging.getCommonPager
 import com.example.nmbcompose.repository.HomeRepository
 import com.squareup.moshi.JsonClass
 import com.yollpoll.framework.extend.getBean
@@ -26,6 +30,7 @@ import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -38,10 +43,16 @@ class HomeViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val repository: HomeRepository
 ) :
-    BaseViewModel<HomeAction, HomeState>(HomeState(), context) {
-
+    BaseViewModel<HomeViewModel.HomeAction, HomeViewModel.HomeState>(
+        HomeState(threadPager = getCommonPager { repository.getTimeLinePagingSource() }), context
+    ) {
 
     override fun onAction(action: HomeAction) {
+        when (action) {
+            is HomeAction.OnForumSelect -> {
+                refreshThreadFlow(action.forum.id)
+            }
+        }
     }
 
     init {
@@ -58,12 +69,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun refreshThreadFlow(forumId: String) {
+        viewState.value.threadPager = getCommonPager {
+            repository.getThreadsPagingSource(forumId)
+        }
+    }
 
+    @JsonClass(generateAdapter = true)
+    data class HomeState(
+        var currentForumName: String = " ",
+        var forumList: List<Forum>? = arrayListOf(),
+        var threadPager: Pager<Int, ArticleItem>
+    ) : BaseViewState()
+
+    sealed class HomeAction : BaseUiAction() {
+        class OnForumSelect(val forum: ForumDetail) : HomeAction()
+    }
 }
 
-@JsonClass(generateAdapter = true)
-data class HomeState(var forumList: List<Forum>? = arrayListOf()) : BaseViewState()
-
-sealed class HomeAction : BaseUiAction() {
-    class OnForumSelect(val forum: ForumDetail) : HomeAction()
-}
