@@ -96,6 +96,10 @@ dependencies {
     implementation "com.google.accompanist:accompanist-insets-ui:$accompanist_version"
     implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
 
-
+//    glide
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.5.0'
+    //coil
+//    implementation 'io.coil-kt:coil:1.2.1'
 }
 apply from: "../framework.gradle"

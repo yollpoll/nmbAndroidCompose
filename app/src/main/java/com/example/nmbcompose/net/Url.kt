@@ -30,7 +30,8 @@ const val DEL_COLLECTION: String = "/Api/delFeed"
 
 //时间线
 //    public static final String TIME_LINE = "Api/timeline";
-const val TIME_LINE: String = "Api/timeline"
+const val TIME_LINE: String = "Api/timeline/"
+const val TIME_LINE_ID = "-1"
 
 var realUrl: String? = null//重定向以后获取到的根url
 

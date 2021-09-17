@@ -25,6 +25,6 @@ interface HttpService {
     suspend fun getThreadList(@Path("id") id: String, @Path("page") page: Int): Article//获取串列表
 
     @GET(TIME_LINE)
-    suspend fun getTimeLine(): Article//时间线
+    suspend fun getTimeLine(@Query("page") page: Int): Article//时间线
 
 }

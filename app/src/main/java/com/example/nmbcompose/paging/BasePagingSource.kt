@@ -1,11 +1,14 @@
 package com.example.nmbcompose.paging
 
+import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.repository.START_INDEX
 import java.lang.Exception
+import kotlin.math.log
 
 fun <Key : Any, Value : Any> getCommonPager(pagingSourceFactory: () -> PagingSource<Key, Value>): Pager<Key, Value> {
     return Pager(PagingConfig(20)) {
@@ -39,6 +42,7 @@ abstract class BasePagingSource<T : Any> :
         val pos = params.key ?: START_INDEX
         val startIndex = pos * params.loadSize + 1
         val endIndex = (pos + 1) * params.loadSize
+        Log.d(TAG, "load: $pos")
 
         return try {
             val list = load(pos)

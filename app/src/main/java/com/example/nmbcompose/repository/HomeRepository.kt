@@ -8,6 +8,7 @@ import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.di.HomeRepositoryAnnotation
 import com.example.nmbcompose.di.LauncherRetrofitFactory
 import com.example.nmbcompose.net.HttpService
+import com.example.nmbcompose.net.TIME_LINE_ID
 import com.example.nmbcompose.paging.BasePagingSource
 import com.yollpoll.framework.net.http.RetrofitFactory
 import kotlinx.coroutines.coroutineScope
@@ -28,7 +29,7 @@ class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitF
     /**
      * 时间线
      */
-    suspend fun getTimeLine(page: Int) = service.getTimeLine()
+    suspend fun getTimeLine(page: Int) = service.getTimeLine(page = page)
 
     /**
      * 获取串列表的pagingSource
@@ -47,6 +48,7 @@ class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitF
     fun getTimeLinePagingSource(): BasePagingSource<ArticleItem> {
         return object : BasePagingSource<ArticleItem>() {
             override suspend fun load(pos: Int): List<ArticleItem> {
+                Log.d(TAG, "load: pos is $pos")
                 return getTimeLine(pos)
             }
         }
