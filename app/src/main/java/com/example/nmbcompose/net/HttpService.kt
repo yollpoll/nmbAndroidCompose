@@ -22,7 +22,7 @@ interface HttpService {
     suspend fun refreshCover(): ResponseBody
 
     @GET(GET_ARTICLE)
-    suspend fun getThreadList(@Path("id") id: String, @Path("page") page: Int): Article//获取串列表
+    suspend fun getThreadList(@Query("id") id: String, @Query("page") page: Int): Article//获取串列表
 
     @GET(TIME_LINE)
     suspend fun getTimeLine(@Query("page") page: Int): Article//时间线

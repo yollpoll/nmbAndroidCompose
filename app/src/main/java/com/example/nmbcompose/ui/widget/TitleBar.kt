@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun TitleBar(text: String, showMenu: Boolean, navigation: () -> Unit) {
     TopAppBar(
-        title = { Text(text = "匿名板") },
+        title = { Text(text = text) },
         navigationIcon = {
             if (showMenu) {
                 Icon(

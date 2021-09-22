@@ -22,11 +22,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
@@ -73,21 +76,26 @@ fun HomeScreen(viewModel: HomeViewModel) {
 @ExperimentalMaterialApi
 @Composable
 fun HomeScreenView(viewModel: HomeViewModel) {
-    var viewState = viewModel.viewState.collectAsState()
+//    var viewState = viewModel.viewState.collectAsState()
+    val listForum = viewModel.listForum.collectAsState(initial = arrayListOf())
+    val threadPager = viewModel.threadPager.observeAsState()
+    val selectForum = viewModel.selectForum.observeAsState()
 
     val state = rememberScaffoldState()
     val scope = rememberCoroutineScope()
+    val s = rememberDrawerState(initialValue = DrawerValue.Closed)
     Scaffold(
         drawerContent = {
-            viewState.value.forumList?.apply {
-                DrawerContent(this) {
-                    viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
+            DrawerContent(listForum.value) {
+                viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
+                scope.launch {
+                    state.drawerState.close()
                 }
             }
         },
         scaffoldState = state,
         topBar = {
-            TitleBar(text = "匿名板", showMenu = true) {
+            TitleBar(text = selectForum.value?.name ?: run { "匿名版" }, showMenu = true) {
                 scope.launch {
                     if (state.drawerState.isOpen) {
                         state.drawerState.close()
@@ -98,9 +106,9 @@ fun HomeScreenView(viewModel: HomeViewModel) {
             }
         },
         drawerContentColor = contentColorFor(MaterialTheme.colors.background),
-//        drawerShape = DrawerShape(),
+        drawerShape = DrawerShape(),
     ) {
-        HomeView(viewState.value.threadPager)
+        HomeView(threadPager.value!!)
     }
 }
 
@@ -116,12 +124,11 @@ class DrawerShape : Shape {
         layoutDirection: LayoutDirection,
         density: Density
     ): Outline {
-        return Outline.Rectangle(
-            Rect(
-                0f,
-                0f,
-                DRAWER_LAYOUT_WIDTH.value/* width */,
-                size.height /* height */
+        return Outline.Rounded(
+            RoundRect(
+                Rect(top = 0f, left = 0f, right = DRAWER_LAYOUT_WIDTH.value, bottom = size.height),
+                bottomRight = CornerRadius(x = 30f, y = 30f),
+                topRight = CornerRadius(x = 30f, y = 30f)
             )
         )
     }
@@ -134,8 +141,8 @@ class DrawerShape : Shape {
 fun DrawerContent(list: List<Forum>, onClick: (ForumDetail) -> Unit) {
     Column {
         Cover()
-        Divider()
-        SettingContent()
+//        Divider()
+//        SettingContent()
         Divider()
         ForumList(list, onClick)
     }
@@ -207,9 +214,7 @@ fun ForumList(list: List<Forum>, onClick: (ForumDetail) -> Unit) {
     }
     LazyColumn {
         items(detailList) { content ->
-            ForumDetailCard(content) {
-                onClick.invoke(content)
-            }
+            ForumDetailCard(content, onClick)
         }
     }
 }
@@ -266,9 +271,9 @@ fun forumCard(forum: Forum) {
  *板块列表
  */
 @Composable
-fun ForumDetailCard(forumDetail: ForumDetail, onClick: () -> Unit) {
+fun ForumDetailCard(forumDetail: ForumDetail, onClick: (ForumDetail) -> Unit) {
     Surface(modifier = Modifier
-        .clickable { onClick }
+        .clickable { onClick.invoke(forumDetail) }
         .fillMaxWidth()
         .padding(all = 5.dp)
     ) {
@@ -306,7 +311,9 @@ fun ThreadList(pager: Pager<Int, ArticleItem>) {
     LazyColumn(
 //        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
-        items(threadItems) { item ->
+        items(threadItems, key = {
+            it.id
+        }) { item ->
             if (item == null) {
                 ThreadPlaceHolder()
             } else {

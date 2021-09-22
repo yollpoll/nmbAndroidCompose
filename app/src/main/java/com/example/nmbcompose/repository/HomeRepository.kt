@@ -37,6 +37,7 @@ class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitF
     fun getThreadsPagingSource(id: String): BasePagingSource<ArticleItem> {
         return object : BasePagingSource<ArticleItem>() {
             override suspend fun load(pos: Int): List<ArticleItem> {
+                Log.d(TAG, "load: ${id},${pos}")
                 return getThreadList(id, pos)
             }
         }

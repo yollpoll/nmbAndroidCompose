@@ -29,7 +29,7 @@ fun LauncherScreen(
     viewModel: LauncherViewModel,
     navTo: (String) -> Unit
 ) {
-    val viewSate by viewModel.viewState.collectAsState()
+//    val viewSate by viewModel.viewState.collectAsState()
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collectLatest {
             when (it) {
@@ -39,7 +39,7 @@ fun LauncherScreen(
             }
         }
     }
-    LauncherScreenView(viewSate.launcherContent) {
+    LauncherScreenView("加载中") {
         viewModel.onAction(LauncherUiAction.LoadUrl)
     }
 }

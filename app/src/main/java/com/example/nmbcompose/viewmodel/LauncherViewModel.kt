@@ -33,7 +33,7 @@ class LauncherViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val repository: LauncherRepository
 ) :
-    BaseViewModel<LauncherUiAction, LauncherState>(LauncherState(launcherText), context) {
+    BaseViewModel<LauncherUiAction>(context) {
 
     init {
         initData()
@@ -80,7 +80,7 @@ class LauncherViewModel @Inject constructor(
 
 }
 
-data class LauncherState(val launcherContent: String) : BaseViewState()
+//data class LauncherState(val launcherContent: String) : BaseViewState()
 
 sealed class LauncherUiAction : BaseUiAction() {
     object LoadUrl : LauncherUiAction()

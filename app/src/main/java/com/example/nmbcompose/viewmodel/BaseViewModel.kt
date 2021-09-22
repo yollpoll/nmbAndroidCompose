@@ -17,10 +17,10 @@ import kotlin.reflect.KClass
  * K:ViewState
  * @param state 初识状态下的ui数据
  */
-abstract class BaseViewModel<T : BaseUiAction, K : BaseViewState>(state: K, context: Context) :
+abstract class BaseViewModel<T : BaseUiAction>( context: Context) :
     FastViewModel(context as Application) {
-    private val _viewState = MutableStateFlow<K>(state)
-    val viewState = _viewState.asStateFlow()
+//    protected val _viewState = MutableStateFlow<K>(state)
+//    val viewState = _viewState.asStateFlow()
 
     //发送的事件
     protected val event = Channel<OneShotEvent>(Channel.BUFFERED)
