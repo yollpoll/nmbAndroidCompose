@@ -18,3 +18,7 @@ val textColorDeep = Color(0xFFFFFFFF)
 
 val black = Color(0xFF000000)
 val white = Color(0xFFFFFFFF)
+
+val nmbBg = Color(0XFFFFFFED)
+val nmbSecondBg = Color(0xFFF0E0D6)
+val nmbAccentColor = Color(0xFF8C1918)

@@ -4,26 +4,39 @@ import android.graphics.drawable.LevelListDrawable
 import android.text.TextUtils
 import android.util.Log
 import android.widget.TextView
+import androidx.annotation.Dimension.DP
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
@@ -35,22 +48,29 @@ import coil.request.ImageRequest
 import com.example.nmbcompose.bean.ArticleItem
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumDetail
+import com.example.nmbcompose.bean.Reply
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.net.imgThumbUrl
 import com.example.nmbcompose.net.realCover
+import com.example.nmbcompose.ui.theme.*
 import com.example.nmbcompose.ui.widget.TitleBar
 import com.example.nmbcompose.viewmodel.*
 import com.google.accompanist.coil.rememberCoilPainter
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 val DRAWER_LAYOUT_WIDTH = 700.dp
 
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     HomeScreenView(viewModel)
 }
 
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
 @Composable
 fun HomeScreenView(viewModel: HomeViewModel) {
     var viewState = viewModel.viewState.collectAsState()
@@ -268,6 +288,8 @@ fun ForumDetailCard(forumDetail: ForumDetail, onClick: () -> Unit) {
 /**
  * 主内容
  */
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
 @Composable
 fun HomeView(pager: Pager<Int, ArticleItem>) {
     ThreadList(pager = pager)
@@ -276,10 +298,14 @@ fun HomeView(pager: Pager<Int, ArticleItem>) {
 /**
  * 串列表
  */
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
 @Composable
 fun ThreadList(pager: Pager<Int, ArticleItem>) {
     val threadItems = pager.flow.collectAsLazyPagingItems()
-    LazyColumn {
+    LazyColumn(
+//        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
         items(threadItems) { item ->
             if (item == null) {
                 ThreadPlaceHolder()
@@ -292,127 +318,285 @@ fun ThreadList(pager: Pager<Int, ArticleItem>) {
     }
 }
 
+
+/**
+ * item状态，开启和关闭
+ */
+enum class ItemStatus {
+    CLOSE, OPEN
+}
+
+/**
+ * 滑动展开
+ */
+@ExperimentalMaterialApi
+@Composable
+fun SwipeItem(
+    isExpended: Boolean = false,
+    onCollect: () -> Unit = {},
+    onReport: () -> Unit = {},
+    content: @Composable () -> Unit
+) {
+    val squareSize = 100.dp
+
+    val swipeAbleState = rememberSwipeableState(initialValue = ItemStatus.CLOSE)
+
+    val sizePx = with(LocalDensity.current) { -squareSize.toPx() }
+
+    val anchors = mapOf(0f to ItemStatus.CLOSE, sizePx to ItemStatus.OPEN)
+
+
+    val reportColor: Color by animateColorAsState(
+        if (isExpended) nmbAccentColor else
+            nmbSecondBg,
+    )
+
+    val reportTextColor: Color by animateColorAsState(
+        if (isExpended) white else
+            nmbAccentColor,
+    )
+    Box(contentAlignment = Alignment.CenterEnd) {
+        Box(
+            modifier = Modifier
+                .swipeable(
+                    state = swipeAbleState,
+                    anchors = anchors,
+                    thresholds = { _, _ -> FractionalThreshold(0.5f) },
+                    orientation = Orientation.Horizontal
+                )
+                .offset {
+                    IntOffset(swipeAbleState.offset.value.roundToInt(), 0)
+                },
+        ) {
+            content.invoke()
+        }
+        Column(modifier = Modifier.offset {
+            IntOffset(-sizePx.roundToInt() + swipeAbleState.offset.value.roundToInt(), 0)
+        }) {
+            Button(
+                onClick = { onCollect.invoke() },
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = reportColor,
+                    contentColor = reportTextColor
+                ),
+                contentPadding = PaddingValues(
+                    start = 0.dp,
+                    end = 0.dp,
+                    top = 10.dp,
+                    bottom = 10.dp
+                )
+            ) {
+                Text(
+                    text = "举报",
+                    modifier = Modifier
+                        .alpha(
+                            alpha = (swipeAbleState.offset.value / sizePx)
+                        )
+                        .width(squareSize),
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = { onReport.invoke() }, colors = ButtonDefaults.buttonColors(
+                    backgroundColor = primary
+                ),
+                contentPadding = PaddingValues(
+                    start = 0.dp,
+                    end = 0.dp,
+                    top = 10.dp,
+                    bottom = 10.dp
+                )
+
+            ) {
+                Text(
+                    text = "收藏",
+                    modifier = Modifier
+                        .alpha(
+                            alpha = (swipeAbleState.offset.value / sizePx)
+                        )
+                        .width(squareSize),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+        }
+
+
+    }
+}
+
 /**
  * item
  */
+@ExperimentalMaterialApi
+@ExperimentalFoundationApi
 @Composable
 fun ThreadItem(item: ArticleItem, onClick: () -> Unit) {
     var isExpanded by remember {
         mutableStateOf(false)
     }
+    //颜色变化
     val surfaceColor: Color by animateColorAsState(
-//        if (isExpanded) MaterialTheme.colors.primary else
-            MaterialTheme.colors.surface,
+        if (isExpanded) nmbSecondBg else
+            nmbBg,
     )
+    //高度变化
+    val surfaceElevation: Dp by animateDpAsState(
+        targetValue =
+        if (isExpanded) 10.dp else
+            0.dp,
+    )
+    //间隔变化
+    val surfacePadding: Dp by animateDpAsState(
+        targetValue =
+        if (isExpanded) 20.dp else
+            0.dp,
+    )
+
     Surface(
         shape = MaterialTheme.shapes.medium,
-        elevation = 1.dp,
+        elevation = surfaceElevation,
         // surfaceColor color will be changing gradually from primary to surface
         color = surfaceColor,
         // animateContentSize will change the Surface size gradually
         modifier = Modifier
             .animateContentSize()
-            .padding(1.dp)
+            .padding(surfacePadding)
+
     ) {
-        Card(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10))
-            .requiredHeightIn(
-                min = if (isExpanded) Dp.Infinity else 100.dp,
-                max = if (isExpanded) Dp.Infinity else 200.dp
-            )
-                .fillMaxWidth()
-//            .requiredHeightIn(min = 100.dp, max = 400.dp)
-                .padding(all = 10.dp)
-                .clickable {
-                    onClick.invoke()
-                    isExpanded = !isExpanded
+        SwipeItem(isExpanded) {
+            Column(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            onClick.invoke()
+                        },
+                        onLongClick = {
+                            isExpanded = !isExpanded
+                        },
+                    )
+                    .clip(RoundedCornerShape(10))
+                    .requiredHeightIn(
+                        min = if (isExpanded) Dp.Infinity else 100.dp,
+                        max = if (isExpanded) Dp.Infinity else 200.dp
+                    )
+                    .fillMaxWidth()
+            ) {
+                Row(modifier = Modifier.padding(10.dp)) {
+                    item.apply {
+                        if (!img.isNullOrEmpty()) {
+                            Image(
+                                painter = rememberCoilPainter(
+                                    request = "${imgThumbUrl}${item.img}${item.ext}",
+                                    fadeIn = true
+                                ),
+                                contentDescription = "",
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .height(100.dp)
+                                    .clip(RoundedCornerShape(10)),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                    }
+
+                    Column(
+                        Modifier
+                            .padding(all = 10.dp)
+                    ) {
+                        //使用textview
+                        Text(text = item.title)
+                        Text(text = item.userid, color = item.let {
+                            if (it.admin == "0") {
+                                return@let Color.DarkGray
+                            } else {
+                                return@let Color.Red
+                            }
+                        })
+                        HtmlContent(item.content, isExpanded)
+                    }
                 }
-        ) {
-            Row {
-                item.apply {
-                    if (!img.isNullOrEmpty()) {
-                        Image(
-                            painter = rememberCoilPainter(
-                                request = "${imgThumbUrl}${item.img}${item.ext}",
-                                fadeIn = true
-                            ),
-                            contentDescription = "",
-                            modifier = Modifier
-                                .width(100.dp)
-                                .height(100.dp)
-                                .clip(RoundedCornerShape(10)),
-                            contentScale = ContentScale.Crop,
-                        )
+                if (!isExpanded) {
+                    Divider()
+                }
+                if (isExpanded) {
+                    Column {
+                        item.replys.forEach {
+                            Divider()
+                            replyItem(it)
+                        }
                     }
                 }
 
-                Column(
-                    Modifier
-                        .padding(all = 10.dp)
-                ) {
-                    //使用textview
-                    Text(text = item.title)
-                    Text(text = item.userid, color = item.let {
-                        if (it.admin == "0") {
-                            return@let Color.DarkGray
-                        } else {
-                            return@let Color.Red
-                        }
-                    })
-
-                AndroidView(
-                    factory = { context ->
-                        val tvContent = TextView(context)
-                        tvContent.ellipsize = TextUtils.TruncateAt.END
-                        return@AndroidView tvContent
-                    },
-                    update = {
-                        val tvContent = it
-                        tvContent.maxLines=if(isExpanded) Int.MAX_VALUE else 5
-                        it.text = HtmlCompat.fromHtml(
-                            item.content.let {
-//                                if (!item.img.isNullOrEmpty()) {
-//                                return@let "<p style=\"width:400px;\">" +
-//                                        "<img src=\"${imgThumbUrl}${item.img}${item.ext}\" align=\"left\" width=\"520\" hspace=\"5\" vspace=\"5\" />" +
-//                                        "测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试" +
-//                                        "</p>"+
-//                                        "$it"
-//                                    return@let "<img src=\"${imgThumbUrl}${item.img}${item.ext}\"/>$it"
-//                                } else {
-                                return@let it
-//                                }
-                            }, HtmlCompat.FROM_HTML_MODE_COMPACT, null
-//                            { url ->
-//                                val dl = LevelListDrawable()
-//                                val empty =
-//                                    tvContent.context.resources.getDrawable(com.example.nmbcompose.R.mipmap.ic_img_loading)
-////                                dl.addLevel(0, 0, empty)
-//                                dl.setBounds(0, 0, 200, 200)
-//
-//
-//                                val loader = ImageLoader(tvContent.context)
-//                                val req = ImageRequest.Builder(tvContent.context)
-//                                    .data(url)
-//                                    .target { drawable ->
-//
-//                                        Log.d(TAG, "ThreadItem: $url ${drawable.bounds.right}")
-//                                        dl.addLevel(1, 1, drawable)
-//                                    }
-//                                    .build()
-//                                loader.enqueue(req)
-//                                return@fromHtml dl
-//                            }
-                        ) { opening, tag, output, xmlReader ->
-                        }
-                    }
-                )
-                }
             }
-
         }
+
     }
 
+}
+
+@Composable
+fun replyItem(item: Reply) {
+    Row(modifier = Modifier.padding(10.dp)) {
+        item.apply {
+            if (!img.isNullOrEmpty()) {
+                Image(
+                    painter = rememberCoilPainter(
+                        request = "${imgThumbUrl}${item.img}${item.ext}",
+                        fadeIn = true
+                    ),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(10)),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+
+        Column(
+            Modifier
+                .padding(all = 5.dp)
+        ) {
+            Row {
+//                Text(text = item.title, fontSize = 12.sp)
+                Text(text = "${item.userid}:", fontSize = 12.sp, color = item.let {
+                    if (it.admin == "0") {
+                        return@let Color.Gray
+                    } else {
+                        return@let Color.Red
+                    }
+                })
+            }
+            HtmlContent(item.content)
+        }
+    }
+}
+
+/**
+ * 解析html的textview
+ */
+@Composable
+fun HtmlContent(content: String, isExpanded: Boolean = true) {
+    AndroidView(
+        factory = { context ->
+            val tvContent = TextView(context)
+            tvContent.ellipsize = TextUtils.TruncateAt.END
+            return@AndroidView tvContent
+        },
+        update = {
+            val tvContent = it
+            tvContent.maxLines = if (isExpanded) Int.MAX_VALUE else 5
+            it.text = HtmlCompat.fromHtml(
+                content.let {
+                    return@let it
+                }, HtmlCompat.FROM_HTML_MODE_COMPACT, null
+            ) { opening, tag, output, xmlReader ->
+            }
+        }
+    )
 }
 
 /**
