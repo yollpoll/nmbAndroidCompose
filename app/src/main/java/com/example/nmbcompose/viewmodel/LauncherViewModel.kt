@@ -6,6 +6,7 @@ import androidx.hilt.Assisted
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.nmbcompose.HOME
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumList
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
@@ -48,7 +49,7 @@ class LauncherViewModel @Inject constructor(
                 repository.loadRealUrl()
                 async { refreshCover() }
                 getForumList()
-                event.send(OneShotEvent.NavigateTo)
+                event.send(OneShotEvent.NavigateTo(HOME))
             } catch (e: Exception) {
                 Log.d(TAG, "getRealUrl error: ${e.message}")
             }
@@ -59,7 +60,11 @@ class LauncherViewModel @Inject constructor(
      * 获取封面真实地址
      */
     private suspend fun refreshCover() {
-        repository.refreshCover()
+        try {
+            repository.refreshCover()
+        } catch (e: Exception) {
+            Log.d(TAG, "refreshCover: 封面获取错误")
+        }
     }
 
     /**

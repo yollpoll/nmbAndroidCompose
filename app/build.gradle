@@ -101,5 +101,8 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.5.0'
     //coil
 //    implementation 'io.coil-kt:coil:1.2.1'
+    //icon库，影响app大小
+//    implementation "androidx.compose.material:material-icons-extended:$compose_version"
+    implementation "com.google.accompanist:accompanist-swiperefresh:$accompanist_version"
 }
 apply from: "../framework.gradle"

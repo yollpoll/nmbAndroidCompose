@@ -2,6 +2,7 @@ package com.example.nmbcompose
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +22,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.*
 import com.example.nmbcompose.navigate.NavType
+import com.example.nmbcompose.ui.screen.ArticleDetailScreen
 import com.example.nmbcompose.ui.screen.HomeScreen
 import com.example.nmbcompose.ui.screen.LauncherScreen
 import com.example.nmbcompose.ui.theme.NmbComposeTheme
@@ -41,6 +43,8 @@ class MainActivity : AppCompatActivity() {
     @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.navigationBarColor = android.graphics.Color.parseColor("#fafafa") //#fafafa
 //        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             App()
@@ -87,6 +91,9 @@ fun MainScreen(viewModel: MainViewModel) {
                             navController.getBackStackEntry(HOME)
                         )
                     )
+                }
+                composable(THREAD_DETAIL) {
+                    ArticleDetailScreen(hiltViewModel(navController.getBackStackEntry(THREAD_DETAIL)))
                 }
             }
         }

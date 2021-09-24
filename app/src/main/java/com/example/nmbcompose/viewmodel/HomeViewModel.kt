@@ -14,6 +14,8 @@ import com.example.nmbcompose.bean.*
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.di.HomeRepositoryAnnotation
+import com.example.nmbcompose.net.TIME_LINE_ID
+import com.example.nmbcompose.paging.BasePagingSource
 import com.example.nmbcompose.paging.getCommonPager
 import com.example.nmbcompose.repository.HomeRepository
 import com.squareup.moshi.JsonClass
@@ -48,11 +50,14 @@ class HomeViewModel @Inject constructor(
         MutableLiveData(getCommonPager { return@getCommonPager repository.getTimeLinePagingSource() })
     val threadPager: LiveData<Pager<Int, ArticleItem>> = _threadPager
 
-    //    var threadPager: Pager<Int, ArticleItem> = getCommonPager {
-//        repository.getTimeLinePagingSource()
-//    }
     private var _selectForum = MutableLiveData<ForumDetail>()
     val selectForum: LiveData<ForumDetail> = _selectForum
+
+    private var _empty = MutableLiveData<Boolean>(true)//当前页面是否是空的（展示一个加载条）
+    val empty: LiveData<Boolean> = _empty
+
+    private var _load = MutableLiveData<Boolean>(true)//当前页面数据是否正在加载
+    val load: LiveData<Boolean> = _load
 
 
     val listForum = flow<List<Forum>> {
@@ -65,42 +70,44 @@ class HomeViewModel @Inject constructor(
     override fun onAction(action: HomeAction) {
         when (action) {
             is HomeAction.OnForumSelect -> {
+                _empty.value = true
                 _selectForum.value = action.forum
-                refreshThreadFlow(action.forum.id)
+                loadData(action.forum.id)
+            }
+            is HomeAction.OnArticleClick -> {
+//                event.send(OneShotEvent.NavigateTo)
             }
         }
     }
 
-    init {
-//        loadForumList()
+    /**
+     * 刷新数据
+     */
+    fun refresh() {
+        loadData(_selectForum.value?.id)
     }
 
-//    private fun loadForumList() {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            try {
-//                a= flow<List<Forum>>{
-//                    getList<Forum>(KEY_FORUM_LIST)?.let { emit(it) }
-//                }
-//            } catch (e: Exception) {
-//                Log.d(TAG, "loadForumList: ${e.message}")
-//            }
-//        }
-//    }
-
-    private fun refreshThreadFlow(forumId: String) {
-//        val source = getCommonPager {
-//            Log.d(TAG, "refreshThreadFlow: forumId is ${forumId}")
-//            repository.getThreadsPagingSource(forumId)
-//        }
-
-        _threadPager.value = getCommonPager {
-            repository.getThreadsPagingSource(forumId)
+    /**
+     * 加载数据
+     */
+    private fun loadData(forumId: String?) {
+        if (null == forumId)
+            return
+        if (forumId == TIME_LINE_ID) {
+            _threadPager.value = getCommonPager {
+                repository.getTimeLinePagingSource()
+            }
+        } else {
+            _threadPager.value = getCommonPager {
+                repository.getThreadsPagingSource(forumId)
+            }
         }
     }
 
 
     sealed class HomeAction : BaseUiAction() {
         class OnForumSelect(val forum: ForumDetail) : HomeAction()
+        class OnArticleClick(val item: ArticleItem) : HomeAction()
     }
 }
 

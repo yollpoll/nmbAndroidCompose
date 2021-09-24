@@ -3,6 +3,7 @@ package com.example.nmbcompose.ui.screen
 import android.graphics.drawable.LevelListDrawable
 import android.text.TextUtils
 import android.util.Log
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.annotation.Dimension.DP
 import androidx.compose.animation.animateColorAsState
@@ -20,13 +21,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.sharp.Menu
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
+import androidx.compose.runtime.R
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -34,6 +43,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -43,7 +53,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
+import androidx.paging.LoadState
 import androidx.paging.Pager
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import coil.ImageLoader
@@ -56,9 +69,14 @@ import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.net.imgThumbUrl
 import com.example.nmbcompose.net.realCover
 import com.example.nmbcompose.ui.theme.*
+import com.example.nmbcompose.ui.widget.FullScreenLoading
+import com.example.nmbcompose.ui.widget.LoadingContent
 import com.example.nmbcompose.ui.widget.TitleBar
 import com.example.nmbcompose.viewmodel.*
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -80,10 +98,10 @@ fun HomeScreenView(viewModel: HomeViewModel) {
     val listForum = viewModel.listForum.collectAsState(initial = arrayListOf())
     val threadPager = viewModel.threadPager.observeAsState()
     val selectForum = viewModel.selectForum.observeAsState()
+    val threadItems = threadPager.value!!.flow.collectAsLazyPagingItems()
 
     val state = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    val s = rememberDrawerState(initialValue = DrawerValue.Closed)
     Scaffold(
         drawerContent = {
             DrawerContent(listForum.value) {
@@ -107,8 +125,44 @@ fun HomeScreenView(viewModel: HomeViewModel) {
         },
         drawerContentColor = contentColorFor(MaterialTheme.colors.background),
         drawerShape = DrawerShape(),
+        floatingActionButton = {
+            Surface(
+                elevation = 3.dp,
+                shape = CircleShape,
+                color = MaterialTheme.colors.primary,
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            scope.launch {
+                                if (state.drawerState.isOpen) {
+                                    state.drawerState.close()
+                                } else {
+                                    state.drawerState.open()
+                                }
+                            }
+                        },
+                        onLongClick = {},
+                        onDoubleClick = { viewModel.refresh() },
+                    ),
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = "action menu",
+                    tint = MaterialTheme.colors.secondary,
+                    modifier = Modifier.padding(20.dp),
+                )
+            }
+
+
+        },
+        isFloatingActionButtonDocked = true
     ) {
-        HomeView(threadPager.value!!)
+        val emptyRefresh =
+            (threadItems.loadState.refresh == LoadState.Loading) && (threadItems.itemCount == 0)
+        val refreshLoading = threadItems.loadState.refresh == LoadState.Loading
+        HomeView(threadItems, emptyRefresh, refreshLoading, { threadItems.refresh() }) {
+            viewModel.onAction(HomeViewModel.HomeAction.OnArticleClick(it))
+        }
     }
 }
 
@@ -193,14 +247,26 @@ fun SettingItem(title: String, onClick: () -> Unit) {
  */
 @Composable
 fun Cover() {
-    Image(
-        painter = rememberCoilPainter(request = realCover),
-        contentDescription = "",
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentScale = ContentScale.Crop
-    )
+    if (realCover.isNullOrEmpty()) {
+        Image(
+            painter = painterResource(id = com.example.nmbcompose.R.mipmap.ic_img_loading),
+            contentDescription = "",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Image(
+            painter = rememberCoilPainter(request = realCover),
+            contentDescription = "",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+
 
 }
 
@@ -296,8 +362,20 @@ fun ForumDetailCard(forumDetail: ForumDetail, onClick: (ForumDetail) -> Unit) {
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun HomeView(pager: Pager<Int, ArticleItem>) {
-    ThreadList(pager = pager)
+fun HomeView(
+    threadItems: LazyPagingItems<ArticleItem>,
+    empty: Boolean,
+    loading: Boolean,
+    onRefresh: () -> Unit,
+    onItemClick: (ArticleItem) -> Unit
+) {
+    LoadingContent(
+        empty = empty,
+        emptyContent = { FullScreenLoading() },
+        loading = loading,
+        onRefresh = { onRefresh.invoke() }) {
+        ThreadList(threadItems, onItemClick)
+    }
 }
 
 /**
@@ -306,20 +384,15 @@ fun HomeView(pager: Pager<Int, ArticleItem>) {
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun ThreadList(pager: Pager<Int, ArticleItem>) {
-    val threadItems = pager.flow.collectAsLazyPagingItems()
-    LazyColumn(
-//        verticalArrangement = Arrangement.spacedBy(1.dp),
-    ) {
+fun ThreadList(threadItems: LazyPagingItems<ArticleItem>, onItemClick: (ArticleItem) -> Unit) {
+    LazyColumn {
         items(threadItems, key = {
             it.id
         }) { item ->
             if (item == null) {
                 ThreadPlaceHolder()
             } else {
-                ThreadItem(item) {
-                    //点击事件
-                }
+                ThreadItem(item, onItemClick)
             }
         }
     }
@@ -439,7 +512,7 @@ fun SwipeItem(
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun ThreadItem(item: ArticleItem, onClick: () -> Unit) {
+fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
     var isExpanded by remember {
         mutableStateOf(false)
     }
@@ -477,7 +550,7 @@ fun ThreadItem(item: ArticleItem, onClick: () -> Unit) {
                 modifier = Modifier
                     .combinedClickable(
                         onClick = {
-                            onClick.invoke()
+                            onClick.invoke(item)
                         },
                         onLongClick = {
                             isExpanded = !isExpanded

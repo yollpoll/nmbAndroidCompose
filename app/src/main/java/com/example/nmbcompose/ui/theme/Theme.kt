@@ -10,15 +10,17 @@ import androidx.compose.ui.graphics.Color
 private val DarkColorPalette = darkColors(
     primary = primary,
     primaryVariant = primaryVariant,
-    secondary = secondary,
-    background = black
+    secondary = nmbSecondBg,
+    background = black,
+    surface = nmbAccentColor
 )
 
 private val LightColorPalette = lightColors(
     primary = primary,
     primaryVariant = primaryVariant,
-    secondary = secondary,
+    secondary = nmbSecondBg,
     background = nmbBg,
+    surface = nmbBg
     /* Other default colors to override
     background = Color.White,
     surface = Color.White,
@@ -38,7 +40,7 @@ fun NmbComposeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compos
     }
 
     MaterialTheme(
-        colors = colors,
+        colors = LightColorPalette,
         typography = Typography,
         shapes = Shapes,
         content = content

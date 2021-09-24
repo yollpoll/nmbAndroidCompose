@@ -34,7 +34,7 @@ fun LauncherScreen(
         viewModel.eventFlow.collectLatest {
             when (it) {
                 is BaseViewModel.OneShotEvent.NavigateTo -> {
-                    navTo.invoke(HOME)
+                    navTo.invoke(it.param.route)
                 }
             }
         }

@@ -27,4 +27,7 @@ interface HttpService {
     @GET(TIME_LINE)
     suspend fun getTimeLine(@Query("page") page: Int): Article//时间线
 
+    @GET(GET_CHILD_ARTICLE)
+    suspend fun getArticleDetail(@Query("id") id: String, @Query("page") page: Int): Article//获取串内容
+
 }

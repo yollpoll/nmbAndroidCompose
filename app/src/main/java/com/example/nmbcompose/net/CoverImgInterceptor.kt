@@ -7,13 +7,18 @@ import okhttp3.Response
 
 class CoverImgInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val orgUrl = chain.request().url.toUrl().toString()
-        val response = chain.proceed(chain.request())
-        val realUrl = response.request.url.toUrl().toString()
-        if (orgUrl == COVER) {
-            //拦截到封面请求
-            realCover = realUrl
+        try {
+            val orgUrl = chain.request().url.toUrl().toString()
+            val response = chain.proceed(chain.request())
+            val realUrl = response.request.url.toUrl().toString()
+            if (orgUrl == COVER) {
+                //拦截到封面请求
+                realCover = realUrl
+            }
+            return response
+        } catch (e: Exception) {
+
         }
-        return response
+        return chain.proceed(chain.request())
     }
 }

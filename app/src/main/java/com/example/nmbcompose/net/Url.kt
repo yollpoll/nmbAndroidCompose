@@ -7,7 +7,7 @@ const val ROOT_URL = "Api/backupUrl"//重定向获取根url
 
 const val CDN_URL = "Api/getCdnPath"//图片cdn地址
 const val COVER = "http://cover.acfunwiki.org/cover.php"//封面地址,会重定向
-var realCover = "http://cover.acfunwiki.org/cover.php"//封面图片重定向以后的真实地址
+var realCover = ""//封面图片重定向以后的真实地址
 const val ANNOUNCEMENT = "http://cover.acfunwiki.org/nmb-notice.json"//公告
 const val IMG_THUMB_URL = "/thumb/"
 const val IMG_URL = "/image/"
