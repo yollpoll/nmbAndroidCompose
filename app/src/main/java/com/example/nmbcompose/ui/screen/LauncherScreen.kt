@@ -16,6 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.nmbcompose.HOME
+import com.example.nmbcompose.RouteDispatcher
+import com.example.nmbcompose.RouterData
+import com.example.nmbcompose.base.BaseScreen
+import com.example.nmbcompose.base.RouterScreen
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.navigate.NavType
 import com.example.nmbcompose.ui.theme.primary
@@ -27,18 +31,8 @@ import kotlin.math.log
 @Composable
 fun LauncherScreen(
     viewModel: LauncherViewModel,
-    navTo: (String) -> Unit
-) {
-//    val viewSate by viewModel.viewState.collectAsState()
-    LaunchedEffect(Unit) {
-        viewModel.eventFlow.collectLatest {
-            when (it) {
-                is BaseViewModel.OneShotEvent.NavigateTo -> {
-                    navTo.invoke(it.param.route)
-                }
-            }
-        }
-    }
+    navTo: RouteDispatcher
+) = BaseScreen(viewModel = viewModel, navTo = navTo) {
     LauncherScreenView("加载中") {
         viewModel.onAction(LauncherUiAction.LoadUrl)
     }

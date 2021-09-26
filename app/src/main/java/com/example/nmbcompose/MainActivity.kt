@@ -75,21 +75,30 @@ fun MainScreen(viewModel: MainViewModel) {
         Surface(color = MaterialTheme.colors.background) {
             val navController = rememberNavController()
             //导航回调
-            val navTo: (String) -> Unit = {
-                navController.navigate(it)
+            val navTo: (RouterData) -> Unit = {
+                val url = it.route
+                navController.navigate(url)
+            }
+
+            val dispatcher=object : RouteDispatcher() {
+                override fun invoke(data: RouterData) {
+                    val url = data.route
+                    navController.navigate(url)
+                }
             }
             NavHost(navController = navController, startDestination = LAUNCHER) {
                 composable(LAUNCHER) {
                     LauncherScreen(
                         createViewModel(navController = navController, LAUNCHER),
-                        navTo
+                        dispatcher
                     )
                 }
                 composable(HOME) {
                     HomeScreen(
                         hiltViewModel<HomeViewModel>(
                             navController.getBackStackEntry(HOME)
-                        )
+                        ),
+                        dispatcher
                     )
                 }
                 composable(THREAD_DETAIL) {

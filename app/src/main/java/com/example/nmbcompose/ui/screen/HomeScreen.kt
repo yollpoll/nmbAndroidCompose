@@ -61,6 +61,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import coil.ImageLoader
 import coil.request.ImageRequest
+import com.example.nmbcompose.RouteDispatcher
+import com.example.nmbcompose.RouterData
+import com.example.nmbcompose.base.BaseScreen
 import com.example.nmbcompose.bean.ArticleItem
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumDetail
@@ -86,9 +89,10 @@ val DRAWER_LAYOUT_WIDTH = 700.dp
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
-    HomeScreenView(viewModel)
-}
+fun HomeScreen(viewModel: HomeViewModel, navTo: RouteDispatcher) =
+    BaseScreen(viewModel = viewModel, navTo = navTo) {
+        HomeScreenView(viewModel)
+    }
 
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
