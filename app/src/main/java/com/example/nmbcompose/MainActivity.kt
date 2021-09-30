@@ -18,22 +18,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.*
-import com.example.nmbcompose.navigate.NavType
 import com.example.nmbcompose.ui.screen.ArticleDetailScreen
 import com.example.nmbcompose.ui.screen.HomeScreen
 import com.example.nmbcompose.ui.screen.LauncherScreen
 import com.example.nmbcompose.ui.theme.NmbComposeTheme
+import com.example.nmbcompose.viewmodel.BaseViewModel
 import com.example.nmbcompose.viewmodel.HomeViewModel
 import com.example.nmbcompose.viewmodel.MainViewModel
-import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import javax.inject.Inject
+import java.io.Serializable
 
 private const val TAG = "MainActivity"
 
@@ -75,34 +75,55 @@ fun MainScreen(viewModel: MainViewModel) {
         Surface(color = MaterialTheme.colors.background) {
             val navController = rememberNavController()
             //导航回调
-            val navTo: (RouterData) -> Unit = {
-                val url = it.route
-                navController.navigate(url)
-            }
-
-            val dispatcher=object : RouteDispatcher() {
+            val dispatcher = object : RouteDispatcher() {
                 override fun invoke(data: RouterData) {
                     val url = data.route
-                    navController.navigate(url)
+                    var param: String? = null
+                    data.params?.let {
+                        val type = Types.newParameterizedType(
+                            Map::class.java,
+                            String::class.java,
+                            String::class.java
+                        )
+                        param = Moshi.Builder().build().adapter<Map<String, String>>(type)
+                            .toJson(data.params)
+                    }
+                    val route = "${url}${param?.run { "/${this}" } ?: ""}"
+                    Log.d(TAG, "invoke: $route")
+                    navController.navigate(route = route)
                 }
             }
             NavHost(navController = navController, startDestination = LAUNCHER) {
                 composable(LAUNCHER) {
-                    LauncherScreen(
-                        createViewModel(navController = navController, LAUNCHER),
-                        dispatcher
-                    )
+                    createArgument(navBackStackEntry = it) {
+                        LauncherScreen(
+                            createViewModel(navController = navController, LAUNCHER),
+                            dispatcher
+                        )
+                    }
                 }
                 composable(HOME) {
-                    HomeScreen(
-                        hiltViewModel<HomeViewModel>(
-                            navController.getBackStackEntry(HOME)
-                        ),
-                        dispatcher
-                    )
+                    createArgument(it) {
+                        HomeScreen(
+                            createViewModel(navController = navController, HOME),
+                            dispatcher
+                        )
+                    }
                 }
-                composable(THREAD_DETAIL) {
-                    ArticleDetailScreen(hiltViewModel(navController.getBackStackEntry(THREAD_DETAIL)))
+                composable(
+                    getRouteWithParam(THREAD_DETAIL),
+                ) {
+                    createArgument(it) { args ->
+                        ArticleDetailScreen(
+                            createViewModel(
+                                navController = navController,
+                                getRouteWithParam(THREAD_DETAIL),
+                                args = args
+                            ),
+                            dispatcher,
+                            args["id"] ?: "null",
+                        )
+                    }
                 }
             }
         }
@@ -121,12 +142,29 @@ fun DefaultPreview() {
 
 //在 NavGraph 全局范围使用 Hilt 创建 ViewModel
 @Composable
-inline fun <reified VM : ViewModel> createViewModel(
+inline fun <reified VM : BaseViewModel<*>> createViewModel(
     navController: NavController,
-    graphId: String = ""
-): VM = hiltViewModel(viewModelStoreOwner = navController.getBackStackEntry(graphId))
-//
-//@Composable
-//inline fun <reified VM : ViewModel> createViewModel(): VM {
-//    return viewModel(factory = ViewModelProvider.NewInstanceFactory())
-//}
+    graphId: String = "",
+    args: Map<String, String> = hashMapOf()
+): VM {
+    val vm = hiltViewModel<VM>(viewModelStoreOwner = navController.getBackStackEntry(graphId))
+    vm.arguments = args
+    return vm
+}
+
+
+//解析param生成map的args
+@Composable
+fun createArgument(
+    navBackStackEntry: NavBackStackEntry,
+    content: @Composable (Map<String, String>) -> Unit
+) {
+    val param = navBackStackEntry.arguments?.getString("param") ?: "{}"
+    val type = Types.newParameterizedType(
+        Map::class.java,
+        String::class.java,
+        String::class.java
+    )
+    val args = Moshi.Builder().build().adapter<Map<String, String>>(type).fromJson(param)
+    content.invoke(args ?: hashMapOf())
+}

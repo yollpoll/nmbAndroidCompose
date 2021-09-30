@@ -7,6 +7,7 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.nmbcompose.HOME
+import com.example.nmbcompose.RouterData
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumList
 import com.example.nmbcompose.constant.KEY_FORUM_LIST

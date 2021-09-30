@@ -28,4 +28,5 @@ class NetModuleDI {
     fun provideCommonRetrofitFactory(): RetrofitFactory {
         return commonRetrofitFactory
     }
+
 }

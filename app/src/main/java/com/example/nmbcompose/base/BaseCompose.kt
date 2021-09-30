@@ -35,6 +35,8 @@ fun <T : BaseViewModel<*>> RouterScreen(
                 is BaseViewModel.OneShotEvent.NavigateTo -> {
                     navTo.invoke(it.param)
                 }
+                is BaseViewModel.OneShotEvent.BackTo -> {
+                }
             }
         }
     }

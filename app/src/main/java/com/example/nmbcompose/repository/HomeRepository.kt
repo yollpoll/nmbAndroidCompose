@@ -15,7 +15,6 @@ import kotlinx.coroutines.coroutineScope
 import java.lang.Exception
 import javax.inject.Inject
 
-const val START_INDEX = 1
 
 class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitFactory: RetrofitFactory) :
     IRepository {

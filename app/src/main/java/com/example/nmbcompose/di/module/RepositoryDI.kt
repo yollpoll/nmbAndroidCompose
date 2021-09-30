@@ -1,5 +1,6 @@
 package com.example.nmbcompose.di
 
+import com.example.nmbcompose.repository.ArticleDetailRepository
 import com.example.nmbcompose.repository.HomeRepository
 import com.example.nmbcompose.repository.IRepository
 import com.example.nmbcompose.repository.LauncherRepository
@@ -18,4 +19,8 @@ abstract class LauncherRepositoryDI {
     @Binds
     @HomeRepositoryAnnotation
     abstract fun provideHomeRepository(launcherRepository: HomeRepository): IRepository
+
+    @Binds
+    @ArticleDetailAnnotation
+    abstract fun provideArticleDetailRepository(repository: ArticleDetailRepository): IRepository
 }

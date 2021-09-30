@@ -10,6 +10,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.nmbcompose.RouterData
+import com.example.nmbcompose.THREAD_DETAIL
 import com.example.nmbcompose.bean.*
 import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
@@ -75,7 +77,16 @@ class HomeViewModel @Inject constructor(
                 loadData(action.forum.id)
             }
             is HomeAction.OnArticleClick -> {
-//                event.send(OneShotEvent.NavigateTo)
+                viewModelScope.launch(Dispatchers.IO) {
+                    event.send(
+                        OneShotEvent.NavigateTo(
+                            RouterData(
+                                THREAD_DETAIL,
+                                hashMapOf("id" to action.item.id, "title" to action.item.title)
+                            )
+                        )
+                    )
+                }
             }
         }
     }

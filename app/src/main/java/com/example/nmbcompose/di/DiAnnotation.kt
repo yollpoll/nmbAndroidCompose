@@ -21,3 +21,7 @@ annotation class LauncherRepositoryAnnotation
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class HomeRepositoryAnnotation
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ArticleDetailAnnotation

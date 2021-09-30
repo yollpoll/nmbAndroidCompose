@@ -6,9 +6,10 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.nmbcompose.constant.TAG
-import com.example.nmbcompose.repository.START_INDEX
 import java.lang.Exception
 import kotlin.math.log
+
+const val START_INDEX = 1
 
 fun <Key : Any, Value : Any> getCommonPager(pagingSourceFactory: () -> PagingSource<Key, Value>): Pager<Key, Value> {
     return Pager(PagingConfig(20)) {
