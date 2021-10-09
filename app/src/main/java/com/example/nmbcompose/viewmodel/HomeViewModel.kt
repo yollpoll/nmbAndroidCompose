@@ -21,10 +21,7 @@ import com.example.nmbcompose.paging.BasePagingSource
 import com.example.nmbcompose.paging.getCommonPager
 import com.example.nmbcompose.repository.HomeRepository
 import com.squareup.moshi.JsonClass
-import com.yollpoll.framework.extend.getBean
-import com.yollpoll.framework.extend.getList
-import com.yollpoll.framework.extend.getString
-import com.yollpoll.framework.extend.toListBean
+import com.yollpoll.framework.extend.*
 import com.yollpoll.framework.message.liveeventbus.Observable
 import dagger.Module
 import dagger.Provides
@@ -82,7 +79,10 @@ class HomeViewModel @Inject constructor(
                         OneShotEvent.NavigateTo(
                             RouterData(
                                 THREAD_DETAIL,
-                                hashMapOf("id" to action.item.id, "title" to action.item.title)
+                                hashMapOf(
+                                    "id" to action.item.id,
+                                    "title" to action.item.title,
+                                )
                             )
                         )
                     )

@@ -50,6 +50,8 @@ abstract class BasePagingSource<T : Any> :
             val list = load(pos)
 //                val list = query.invoke()
 //                val list = service.getThreadList(id, pos)
+            Log.d(TAG, "load: nextKey is ${if (list.isNullOrEmpty()) "null" else pos + 1}")
+            Log.d(TAG, "load: list>>> ${list.size}")
             LoadResult.Page<Int, T>(
                 list,
                 if (pos <= START_INDEX) null else pos - 1,//上一个key

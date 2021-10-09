@@ -80,6 +80,11 @@ fun MainScreen(viewModel: MainViewModel) {
                     val url = data.route
                     var param: String? = null
                     data.params?.let {
+                        it.forEach {
+                            Log.d(TAG, "invoke: ${it.key}_${it.value}")
+                        }
+                    }
+                    data.params?.let {
                         val type = Types.newParameterizedType(
                             Map::class.java,
                             String::class.java,
@@ -90,7 +95,8 @@ fun MainScreen(viewModel: MainViewModel) {
                     }
                     val route = "${url}${param?.run { "/${this}" } ?: ""}"
                     Log.d(TAG, "invoke: $route")
-                    navController.navigate(route = route)
+                    navController.navigate(route = route) {
+                    }
                 }
             }
             NavHost(navController = navController, startDestination = LAUNCHER) {
@@ -121,7 +127,6 @@ fun MainScreen(viewModel: MainViewModel) {
                                 args = args
                             ),
                             dispatcher,
-                            args["id"] ?: "null",
                         )
                     }
                 }

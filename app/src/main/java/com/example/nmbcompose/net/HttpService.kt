@@ -1,6 +1,7 @@
 package com.example.nmbcompose.net
 
 import com.example.nmbcompose.bean.Article
+import com.example.nmbcompose.bean.ArticleItem
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumList
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,9 @@ interface HttpService {
     suspend fun getTimeLine(@Query("page") page: Int): Article//时间线
 
     @GET(GET_CHILD_ARTICLE)
-    suspend fun getArticleDetail(@Query("id") id: String, @Query("page") page: Int): Article//获取串内容
+    suspend fun getArticleDetail(
+        @Query("id") id: String,
+        @Query("page") page: Int
+    ): ArticleItem//获取串内容
 
 }

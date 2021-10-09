@@ -1,63 +1,182 @@
 package com.example.nmbcompose.ui.screen
 
+import android.text.TextUtils
+import android.widget.TextView
 import android.widget.Toolbar
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.text.HtmlCompat
+import androidx.lifecycle.asFlow
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.example.nmbcompose.R
 import com.example.nmbcompose.RouteDispatcher
 import com.example.nmbcompose.base.BaseScreen
 import com.example.nmbcompose.bean.ArticleItem
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.Reply
+import com.example.nmbcompose.net.imgThumbUrl
+import com.example.nmbcompose.ui.theme.nmbBg
+import com.example.nmbcompose.ui.theme.nmbSecondBg
 import com.example.nmbcompose.ui.widget.FullScreenLoading
 import com.example.nmbcompose.ui.widget.LoadingContent
 import com.example.nmbcompose.ui.widget.TitleBar
 import com.example.nmbcompose.viewmodel.ArticleDetailViewModel
 import com.example.nmbcompose.viewmodel.BaseUiAction
 import com.example.nmbcompose.viewmodel.HomeViewModel
+import com.google.accompanist.coil.rememberCoilPainter
 import kotlinx.coroutines.Dispatchers
 
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
 @Composable
 fun ArticleDetailScreen(
     viewModel: ArticleDetailViewModel,
     navTo: RouteDispatcher,
-    articleId: String,
 ) = BaseScreen(viewModel = viewModel, navTo = navTo) {
     val title = viewModel.title.collectAsState(initial = "无标题")
-    Content(title.value) {
-    }
-}
-
-@Composable
-fun Content(title: String, onBack: () -> Unit) {
     Scaffold(topBar = {
-        TitleBar(text = title, false, onBack)
-    }) {
+        TitleBar(title.value, false, {
 
+        })
+    }) {
+//        val replies = viewModel.threadPager.value!!.flow.collectAsLazyPagingItems()
+        val replies = viewModel.pagerFlow.collectAsLazyPagingItems()
+        val emptyRefresh =
+            (replies.loadState.refresh == LoadState.Loading) && (replies.itemCount == 0)
+        val refreshLoading = replies.loadState.refresh == LoadState.Loading
+        var detailState = viewModel.articleDetail.collectAsState(initial = null)
+
+        ThreadContent(
+            content = detailState.value,
+            threadItems = replies,
+            empty = emptyRefresh,
+            loading = refreshLoading,
+            onRefresh = { replies.refresh() },
+            onItemClick = {}
+        )
     }
 }
 
+@ExperimentalMaterialApi
+@ExperimentalFoundationApi
 @Composable
 fun ThreadContent(
-    threadItems: LazyPagingItems<ArticleItem>,
+    content: ArticleItem?,
+    threadItems: LazyPagingItems<Reply>,
     empty: Boolean,
     loading: Boolean,
     onRefresh: () -> Unit,
-    onItemClick: (ArticleItem) -> Unit
+    onItemClick: (Reply) -> Unit
 ) {
     LoadingContent(
         empty = empty,
         emptyContent = { FullScreenLoading() },
         loading = loading,
         onRefresh = { onRefresh.invoke() }) {
-        ThreadList(threadItems, onItemClick)
+        ItemList(content, threadItems, onItemClick)
     }
+}
+
+
+/**
+ * item
+ */
+@ExperimentalMaterialApi
+@ExperimentalFoundationApi
+@Composable
+fun Item(
+    userid: String,
+    id: String,
+    date: String,
+    content: String,
+    img: String,
+    isAdmin: Boolean = false,
+    onClick: (Reply) -> Unit
+) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        elevation = 0.dp,
+        // surfaceColor color will be changing gradually from primary to surface
+        // animateContentSize will change the Surface size gradually
+    ) {
+        Column(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = {
+                    },
+                )
+                .clip(RoundedCornerShape(10))
+                .fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.padding(10.dp)) {
+                if (!img.isNullOrEmpty()) {
+                    Image(
+                        painter = rememberCoilPainter(
+                            request = "$imgThumbUrl${img}",
+                            fadeIn = true
+                        ),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(100.dp)
+                            .clip(RoundedCornerShape(10)),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+
+                Column(
+                    Modifier
+                        .padding(all = 10.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = userid, color =
+                            if (!isAdmin) {
+                                Color.Gray
+                            } else {
+                                Color.Red
+                            }
+                        )
+                        Text(
+                            text = id, color = MaterialTheme.colors.primaryVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Content(content)
+                }
+            }
+        }
+
+    }
+    Divider(
+        Modifier.padding(horizontal = 10.dp)
+    )
+
 }
 
 /**
@@ -66,16 +185,78 @@ fun ThreadContent(
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun ThreadList(threadItems: LazyPagingItems<Reply>, onItemClick: (ArticleItem) -> Unit) {
+fun ItemList(
+    header: ArticleItem?,
+    threadItems: LazyPagingItems<Reply>,
+    onItemClick: (Reply) -> Unit
+) {
     LazyColumn {
-        items(threadItems, key = {
-            it.id
-        }) { item ->
+        item {
+            Item(
+                userid = header?.userid ?: "",
+                id = header?.id ?: "",
+                date = "asasa",
+                content = header?.content ?: "",
+                img = "${header?.img}${header?.ext}",
+                isAdmin = header?.admin != "0",
+                onClick = {}
+            )
+        }
+        items(threadItems) { item ->
             if (item == null) {
-                ThreadPlaceHolder()
+                PlaceHolder()
             } else {
-                ThreadItem(item, onItemClick)
+                Item(
+                    userid = item.userid,
+                    id = item.id,
+                    date = "asasa",
+                    content = item.content,
+                    img = "${item.img}${item.ext}",
+                    isAdmin = item.admin != "0",
+                    onClick = {}
+                )
             }
         }
     }
+}
+
+/**
+ * 解析html的textview
+ */
+@Composable
+fun Content(content: String) {
+    AndroidView(
+        factory = { context ->
+            val tvContent = TextView(context)
+            tvContent.ellipsize = TextUtils.TruncateAt.END
+            return@AndroidView tvContent
+        },
+        update = {
+            val tvContent = it
+            it.text = HtmlCompat.fromHtml(
+                content.let {
+                    return@let it
+                }, HtmlCompat.FROM_HTML_MODE_COMPACT, null
+            ) { opening, tag, output, xmlReader ->
+            }
+        }
+    )
+}
+
+/**
+ * 空白占位符
+ */
+@Composable
+fun PlaceHolder() {
+    Card {
+        Surface {
+            Column(Modifier.height(100.dp)) {
+                Image(
+                    painter = painterResource(R.mipmap.ic_launcher_round),
+                    contentDescription = "place holder"
+                )
+            }
+        }
+    }
+
 }

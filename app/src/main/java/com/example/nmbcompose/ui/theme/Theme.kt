@@ -12,7 +12,7 @@ private val DarkColorPalette = darkColors(
     primaryVariant = primaryVariant,
     secondary = nmbSecondBg,
     background = black,
-    surface = nmbAccentColor
+    surface = nmbAccentColor,
 )
 
 private val LightColorPalette = lightColors(
@@ -20,7 +20,7 @@ private val LightColorPalette = lightColors(
     primaryVariant = primaryVariant,
     secondary = nmbSecondBg,
     background = nmbBg,
-    surface = nmbBg
+    surface = nmbBg,
     /* Other default colors to override
     background = Color.White,
     surface = Color.White,

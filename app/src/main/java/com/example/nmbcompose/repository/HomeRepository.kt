@@ -30,11 +30,6 @@ class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitF
      */
     suspend fun getTimeLine(page: Int) = service.getTimeLine(page = page)
 
-    /**
-     * 获取串内容
-     */
-    suspend fun getArticleDetail(id: String, page: Int) = service.getArticleDetail(id, page)
-
 
     /**
      * 获取串列表的pagingSource
@@ -59,14 +54,4 @@ class HomeRepository @Inject constructor(@HomeRepositoryAnnotation val retrofitF
         }
     }
 
-    /**
-     * 获取串的具体内容
-     */
-    fun getThreadsDetailPagingSource(id: String): BasePagingSource<ArticleItem> {
-        return object : BasePagingSource<ArticleItem>() {
-            override suspend fun load(pos: Int): List<ArticleItem> {
-                return getArticleDetail(id, pos)
-            }
-        }
-    }
 }
