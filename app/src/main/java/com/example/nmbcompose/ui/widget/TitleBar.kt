@@ -19,7 +19,7 @@ fun TitleBar(text: String, showMenu: Boolean, navigation: () -> Unit) {
         navigationIcon = {
             if (showMenu) {
                 Icon(
-                    Icons.Outlined.Menu,
+                    Icons.Default.Menu,
                     contentDescription = "menu",
                     modifier = Modifier.clickable {
                         navigation.invoke()

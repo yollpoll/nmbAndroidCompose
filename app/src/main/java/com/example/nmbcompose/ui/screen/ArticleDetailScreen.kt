@@ -54,12 +54,11 @@ import kotlinx.coroutines.Dispatchers
 fun ArticleDetailScreen(
     viewModel: ArticleDetailViewModel,
     navTo: RouteDispatcher,
+    onBack: () -> Unit
 ) = BaseScreen(viewModel = viewModel, navTo = navTo) {
     val title = viewModel.title.collectAsState(initial = "无标题")
     Scaffold(topBar = {
-        TitleBar(title.value, false, {
-
-        })
+        TitleBar(title.value, false, onBack)
     }) {
 //        val replies = viewModel.threadPager.value!!.flow.collectAsLazyPagingItems()
         val replies = viewModel.pagerFlow.collectAsLazyPagingItems()

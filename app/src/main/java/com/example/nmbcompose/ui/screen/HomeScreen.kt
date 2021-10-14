@@ -100,66 +100,65 @@ fun HomeScreen(viewModel: HomeViewModel, navTo: RouteDispatcher) =
 fun HomeScreenView(viewModel: HomeViewModel) {
 //    var viewState = viewModel.viewState.collectAsState()
     val listForum = viewModel.listForum.collectAsState(initial = arrayListOf())
-    val threadPager = viewModel.threadPager.observeAsState()
     val selectForum = viewModel.selectForum.observeAsState()
-    val threadItems = threadPager.value!!.flow.collectAsLazyPagingItems()
+    val threadItems = viewModel.threadFLow.collectAsLazyPagingItems()
 
     val state = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     Scaffold(
-        drawerContent = {
-            DrawerContent(listForum.value) {
-                viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
-                scope.launch {
-                    state.drawerState.close()
-                }
-            }
-        },
-        scaffoldState = state,
-        topBar = {
-            TitleBar(text = selectForum.value?.name ?: run { "匿名版" }, showMenu = true) {
-                scope.launch {
-                    if (state.drawerState.isOpen) {
-                        state.drawerState.close()
-                    } else {
-                        state.drawerState.open()
-                    }
-                }
-            }
-        },
-        drawerContentColor = contentColorFor(MaterialTheme.colors.background),
-        drawerShape = DrawerShape(),
-        floatingActionButton = {
-            Surface(
-                elevation = 3.dp,
-                shape = CircleShape,
-                color = MaterialTheme.colors.primary,
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            scope.launch {
-                                if (state.drawerState.isOpen) {
-                                    state.drawerState.close()
-                                } else {
-                                    state.drawerState.open()
-                                }
-                            }
-                        },
-                        onLongClick = {},
-                        onDoubleClick = { viewModel.refresh() },
-                    ),
-            ) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = "action menu",
-                    tint = MaterialTheme.colors.secondary,
-                    modifier = Modifier.padding(20.dp),
-                )
-            }
-
-
-        },
-        isFloatingActionButtonDocked = true
+//        drawerContent = {
+//            DrawerContent(listForum.value) {
+//                viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
+//                scope.launch {
+//                    state.drawerState.close()
+//                }
+//            }
+//        },
+//        scaffoldState = state,
+//        topBar = {
+//            TitleBar(text = selectForum.value?.name ?: run { "匿名版" }, showMenu = true) {
+//                scope.launch {
+//                    if (state.drawerState.isOpen) {
+//                        state.drawerState.close()
+//                    } else {
+//                        state.drawerState.open()
+//                    }
+//                }
+//            }
+//        },
+//        drawerContentColor = contentColorFor(MaterialTheme.colors.background),
+//        drawerShape = DrawerShape(),
+//        floatingActionButton = {
+//            Surface(
+//                elevation = 3.dp,
+//                shape = CircleShape,
+//                color = MaterialTheme.colors.primary,
+//                modifier = Modifier
+//                    .combinedClickable(
+//                        onClick = {
+//                            scope.launch {
+//                                if (state.drawerState.isOpen) {
+//                                    state.drawerState.close()
+//                                } else {
+//                                    state.drawerState.open()
+//                                }
+//                            }
+//                        },
+//                        onLongClick = {},
+//                        onDoubleClick = { threadItems.refresh() },
+//                    ),
+//            ) {
+//                Icon(
+//                    Icons.Rounded.Edit,
+//                    contentDescription = "action menu",
+//                    tint = MaterialTheme.colors.secondary,
+//                    modifier = Modifier.padding(20.dp),
+//                )
+//            }
+//
+//
+//        },
+//        isFloatingActionButtonDocked = true
     ) {
         val emptyRefresh =
             (threadItems.loadState.refresh == LoadState.Loading) && (threadItems.itemCount == 0)

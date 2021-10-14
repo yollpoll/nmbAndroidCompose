@@ -47,7 +47,7 @@ class HomeViewModel @Inject constructor(
 
     private var _threadPager =
         MutableLiveData(getCommonPager { return@getCommonPager repository.getTimeLinePagingSource() })
-    val threadPager: LiveData<Pager<Int, ArticleItem>> = _threadPager
+    val threadFLow = _threadPager.value!!.flow.cachedIn(viewModelScope)
 
     private var _selectForum = MutableLiveData<ForumDetail>()
     val selectForum: LiveData<ForumDetail> = _selectForum

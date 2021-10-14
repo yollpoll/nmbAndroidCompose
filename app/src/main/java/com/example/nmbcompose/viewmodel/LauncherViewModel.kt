@@ -7,6 +7,7 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.nmbcompose.HOME
+import com.example.nmbcompose.MAIN
 import com.example.nmbcompose.RouterData
 import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumList
@@ -50,7 +51,7 @@ class LauncherViewModel @Inject constructor(
                 repository.loadRealUrl()
                 async { refreshCover() }
                 getForumList()
-                event.send(OneShotEvent.NavigateTo(HOME))
+                event.send(OneShotEvent.NavigateTo(MAIN))
             } catch (e: Exception) {
                 Log.d(TAG, "getRealUrl error: ${e.message}")
             }

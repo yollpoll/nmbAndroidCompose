@@ -22,9 +22,11 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.*
+import androidx.navigation.navigation
 import com.example.nmbcompose.ui.screen.ArticleDetailScreen
 import com.example.nmbcompose.ui.screen.HomeScreen
 import com.example.nmbcompose.ui.screen.LauncherScreen
+import com.example.nmbcompose.ui.screen.MainScreen
 import com.example.nmbcompose.ui.theme.NmbComposeTheme
 import com.example.nmbcompose.viewmodel.BaseViewModel
 import com.example.nmbcompose.viewmodel.HomeViewModel
@@ -47,22 +49,15 @@ class MainActivity : AppCompatActivity() {
         window.navigationBarColor = android.graphics.Color.parseColor("#fafafa") //#fafafa
 //        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            App()
+            App(viewModel())
         }
     }
 }
 
-@ExperimentalFoundationApi
-@ExperimentalMaterialApi
-@Composable
-fun App() {
-    MainScreen(viewModel = viewModel())
-}
-
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun App(viewModel: MainViewModel) {
     NmbComposeTheme {
 //        ProvideWindowInsets {
         val uiController = rememberSystemUiController()
@@ -70,7 +65,6 @@ fun MainScreen(viewModel: MainViewModel) {
             MaterialTheme.colors.primary,
             darkIcons = false
         )
-
         // A surface container using the 'background' color from the theme
         Surface(color = MaterialTheme.colors.background) {
             val navController = rememberNavController()
@@ -79,11 +73,6 @@ fun MainScreen(viewModel: MainViewModel) {
                 override fun invoke(data: RouterData) {
                     val url = data.route
                     var param: String? = null
-                    data.params?.let {
-                        it.forEach {
-                            Log.d(TAG, "invoke: ${it.key}_${it.value}")
-                        }
-                    }
                     data.params?.let {
                         val type = Types.newParameterizedType(
                             Map::class.java,
@@ -103,56 +92,45 @@ fun MainScreen(viewModel: MainViewModel) {
                 composable(LAUNCHER) {
                     createArgument(navBackStackEntry = it) {
                         LauncherScreen(
-                            createViewModel(navController = navController, LAUNCHER),
+                            createViewModel(),
                             dispatcher
                         )
                     }
                 }
-                composable(HOME) {
+                composable(MAIN) {
                     createArgument(it) {
-                        HomeScreen(
-                            createViewModel(navController = navController, HOME),
+                        MainScreen(
+                            createViewModel(),
                             dispatcher
                         )
                     }
                 }
-                composable(
-                    getRouteWithParam(THREAD_DETAIL),
-                ) {
-                    createArgument(it) { args ->
-                        ArticleDetailScreen(
-                            createViewModel(
-                                navController = navController,
-                                getRouteWithParam(THREAD_DETAIL),
-                                args = args
-                            ),
-                            dispatcher,
-                        )
-                    }
-                }
+//                composable(
+//                    getRouteWithParam(THREAD_DETAIL),
+//                ) {
+//                    createArgument(it) { args ->
+//                        ArticleDetailScreen(
+//                            createViewModel(
+//                                args = args
+//                            ),
+//                            dispatcher,
+//                        ) {
+//                            navController.popBackStack()
+//                        }
+//                    }
+//                }
             }
         }
 //        }
     }
 }
 
-
-@ExperimentalMaterialApi
-@ExperimentalFoundationApi
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    App()
-}
-
 //在 NavGraph 全局范围使用 Hilt 创建 ViewModel
 @Composable
 inline fun <reified VM : BaseViewModel<*>> createViewModel(
-    navController: NavController,
-    graphId: String = "",
     args: Map<String, String> = hashMapOf()
 ): VM {
-    val vm = hiltViewModel<VM>(viewModelStoreOwner = navController.getBackStackEntry(graphId))
+    val vm = hiltViewModel<VM>()
     vm.arguments = args
     return vm
 }
