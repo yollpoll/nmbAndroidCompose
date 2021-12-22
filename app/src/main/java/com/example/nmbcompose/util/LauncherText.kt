@@ -6,3 +6,7 @@ val launcherTexts = arrayListOf<String>(
     "ATM又一次延毕了"
 )
 public var launcherText = launcherTexts.random()
+
+suspend fun refreshLauncherText() {
+    launcherText = launcherTexts.random()
+}

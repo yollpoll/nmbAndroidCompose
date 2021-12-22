@@ -89,6 +89,7 @@ fun App(viewModel: MainViewModel) {
                 }
             }
             NavHost(navController = navController, startDestination = LAUNCHER) {
+                //加载页面
                 composable(LAUNCHER) {
                     createArgument(navBackStackEntry = it) {
                         LauncherScreen(
@@ -97,6 +98,7 @@ fun App(viewModel: MainViewModel) {
                         )
                     }
                 }
+                //主内容
                 composable(MAIN) {
                     createArgument(it) {
                         MainScreen(
@@ -105,20 +107,6 @@ fun App(viewModel: MainViewModel) {
                         )
                     }
                 }
-//                composable(
-//                    getRouteWithParam(THREAD_DETAIL),
-//                ) {
-//                    createArgument(it) { args ->
-//                        ArticleDetailScreen(
-//                            createViewModel(
-//                                args = args
-//                            ),
-//                            dispatcher,
-//                        ) {
-//                            navController.popBackStack()
-//                        }
-//                    }
-//                }
             }
         }
 //        }

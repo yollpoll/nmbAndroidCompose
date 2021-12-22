@@ -75,6 +75,7 @@ import com.example.nmbcompose.ui.theme.*
 import com.example.nmbcompose.ui.widget.FullScreenLoading
 import com.example.nmbcompose.ui.widget.LoadingContent
 import com.example.nmbcompose.ui.widget.TitleBar
+import com.example.nmbcompose.util.TransFormContent
 import com.example.nmbcompose.viewmodel.*
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -89,15 +90,19 @@ val DRAWER_LAYOUT_WIDTH = 700.dp
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, navTo: RouteDispatcher) =
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    navTo: RouteDispatcher,
+    onItemClick: (ArticleItem) -> Unit
+) =
     BaseScreen(viewModel = viewModel, navTo = navTo) {
-        HomeScreenView(viewModel)
+        HomeScreenView(viewModel, onItemClick)
     }
 
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun HomeScreenView(viewModel: HomeViewModel) {
+fun HomeScreenView(viewModel: HomeViewModel, onItemClick: (ArticleItem) -> Unit) {
 //    var viewState = viewModel.viewState.collectAsState()
     val listForum = viewModel.listForum.collectAsState(initial = arrayListOf())
     val selectForum = viewModel.selectForum.observeAsState()
@@ -105,258 +110,16 @@ fun HomeScreenView(viewModel: HomeViewModel) {
 
     val state = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    Scaffold(
-//        drawerContent = {
-//            DrawerContent(listForum.value) {
-//                viewModel.onAction(HomeViewModel.HomeAction.OnForumSelect(it))
-//                scope.launch {
-//                    state.drawerState.close()
-//                }
-//            }
-//        },
-//        scaffoldState = state,
-//        topBar = {
-//            TitleBar(text = selectForum.value?.name ?: run { "匿名版" }, showMenu = true) {
-//                scope.launch {
-//                    if (state.drawerState.isOpen) {
-//                        state.drawerState.close()
-//                    } else {
-//                        state.drawerState.open()
-//                    }
-//                }
-//            }
-//        },
-//        drawerContentColor = contentColorFor(MaterialTheme.colors.background),
-//        drawerShape = DrawerShape(),
-//        floatingActionButton = {
-//            Surface(
-//                elevation = 3.dp,
-//                shape = CircleShape,
-//                color = MaterialTheme.colors.primary,
-//                modifier = Modifier
-//                    .combinedClickable(
-//                        onClick = {
-//                            scope.launch {
-//                                if (state.drawerState.isOpen) {
-//                                    state.drawerState.close()
-//                                } else {
-//                                    state.drawerState.open()
-//                                }
-//                            }
-//                        },
-//                        onLongClick = {},
-//                        onDoubleClick = { threadItems.refresh() },
-//                    ),
-//            ) {
-//                Icon(
-//                    Icons.Rounded.Edit,
-//                    contentDescription = "action menu",
-//                    tint = MaterialTheme.colors.secondary,
-//                    modifier = Modifier.padding(20.dp),
-//                )
-//            }
-//
-//
-//        },
-//        isFloatingActionButtonDocked = true
-    ) {
+    Scaffold {
         val emptyRefresh =
             (threadItems.loadState.refresh == LoadState.Loading) && (threadItems.itemCount == 0)
         val refreshLoading = threadItems.loadState.refresh == LoadState.Loading
         HomeView(threadItems, emptyRefresh, refreshLoading, { threadItems.refresh() }) {
             viewModel.onAction(HomeViewModel.HomeAction.OnArticleClick(it))
+            onItemClick.invoke(it)
         }
     }
 }
-
-
-//////////////////drawerLayout//////////////////
-
-/**
- * 抽屉大小布局
- */
-class DrawerShape : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        return Outline.Rounded(
-            RoundRect(
-                Rect(top = 0f, left = 0f, right = DRAWER_LAYOUT_WIDTH.value, bottom = size.height),
-                bottomRight = CornerRadius(x = 30f, y = 30f),
-                topRight = CornerRadius(x = 30f, y = 30f)
-            )
-        )
-    }
-}
-
-/**
- * 抽屉内容
- */
-@Composable
-fun DrawerContent(list: List<Forum>, onClick: (ForumDetail) -> Unit) {
-    Column {
-        Cover()
-//        Divider()
-//        SettingContent()
-        Divider()
-        ForumList(list, onClick)
-    }
-}
-
-/**
- * 设置
- */
-@Composable
-fun SettingContent() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        SettingItem(title = "搜索") {
-
-        }
-        SettingItem(title = "订阅") {
-
-        }
-        SettingItem(title = "设置") {
-
-        }
-        SettingItem(title = "作者") {
-
-        }
-    }
-}
-
-@Composable
-fun SettingItem(title: String, onClick: () -> Unit) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier
-            .clickable {
-                onClick()
-            }
-            .padding(all = 5.dp)
-            .fillMaxWidth()
-    ) {
-        Text(
-            text = title,
-            modifier = Modifier
-                .padding(all = 10.dp),
-        )
-    }
-}
-
-/**
- * 封面
- */
-@Composable
-fun Cover() {
-    if (realCover.isNullOrEmpty()) {
-        Image(
-            painter = painterResource(id = com.example.nmbcompose.R.mipmap.ic_img_loading),
-            contentDescription = "",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            contentScale = ContentScale.Crop
-        )
-    } else {
-        Image(
-            painter = rememberCoilPainter(request = realCover),
-            contentDescription = "",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            contentScale = ContentScale.Crop
-        )
-    }
-
-
-}
-
-/**
- *板块列表
- */
-@Composable
-fun ForumList(list: List<Forum>, onClick: (ForumDetail) -> Unit) {
-    val detailList = list.flatMap {
-        it.forums
-    }
-    LazyColumn {
-        items(detailList) { content ->
-            ForumDetailCard(content, onClick)
-        }
-    }
-}
-
-/**
- * 大板块item
- */
-@Composable
-fun forumCard(forum: Forum) {
-    Row(modifier = Modifier.padding(all = 8.dp)) {
-//        Text(text = forum.name, color = MaterialTheme.colors.primary)
-        // We keep track if the message is expanded or not in this
-        // variable
-        var isExpanded by remember { mutableStateOf(false) }
-        // surfaceColor will be updated gradually from one color to the other
-        val surfaceColor: Color by animateColorAsState(
-            if (isExpanded) MaterialTheme.colors.primary else MaterialTheme.colors.surface,
-        )
-        // We toggle the isExpanded variable when we click on this Column
-        Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
-            Text(
-                text = forum.name,
-                color = MaterialTheme.colors.secondaryVariant,
-                style = MaterialTheme.typography.subtitle2
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                elevation = 1.dp,
-                // surfaceColor color will be changing gradually from primary to surface
-                color = surfaceColor,
-                // animateContentSize will change the Surface size gradually
-                modifier = Modifier
-                    .animateContentSize()
-                    .padding(1.dp)
-            ) {
-                Text(
-                    text = forum.forums[0].msg!!,
-                    modifier = Modifier
-                        .padding(all = 4.dp),
-                    // If the message is expanded, we display all its content
-                    // otherwise we only display the first line
-                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-                    style = MaterialTheme.typography.body2
-                )
-            }
-        }
-    }
-}
-
-/**
- *板块列表
- */
-@Composable
-fun ForumDetailCard(forumDetail: ForumDetail, onClick: (ForumDetail) -> Unit) {
-    Surface(modifier = Modifier
-        .clickable { onClick.invoke(forumDetail) }
-        .fillMaxWidth()
-        .padding(all = 5.dp)
-    ) {
-        Text(
-            text = forumDetail.name!!,
-            modifier = Modifier
-                .padding(all = 10.dp),
-            style = MaterialTheme.typography.body2
-        )
-    }
-}
-
-
-//////////////////主内容//////////////////
 
 
 /**
@@ -597,7 +360,7 @@ fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
                                 return@let Color.Red
                             }
                         })
-                        HtmlContent(item.content, isExpanded)
+                        HtmlContent(item.id, item.content, isExpanded)
                     }
                 }
                 if (!isExpanded) {
@@ -653,7 +416,7 @@ fun replyItem(item: Reply) {
                     }
                 })
             }
-            HtmlContent(item.content)
+            HtmlContent(item.id, item.content)
         }
     }
 }
@@ -662,7 +425,7 @@ fun replyItem(item: Reply) {
  * 解析html的textview
  */
 @Composable
-fun HtmlContent(content: String, isExpanded: Boolean = true) {
+fun HtmlContent(id: String, content: String, isExpanded: Boolean = true) {
     AndroidView(
         factory = { context ->
             val tvContent = TextView(context)
@@ -672,11 +435,15 @@ fun HtmlContent(content: String, isExpanded: Boolean = true) {
         update = {
             val tvContent = it
             tvContent.maxLines = if (isExpanded) Int.MAX_VALUE else 5
-            it.text = HtmlCompat.fromHtml(
-                content.let {
-                    return@let it
-                }, HtmlCompat.FROM_HTML_MODE_COMPACT, null
-            ) { opening, tag, output, xmlReader ->
+            TransFormContent.trans(
+                id, HtmlCompat.fromHtml(
+                    content.let {
+                        return@let it
+                    }, HtmlCompat.FROM_HTML_MODE_COMPACT, null
+                ) { opening, tag, output, xmlReader ->
+                }, tvContent
+            ) {
+                Log.d(TAG, "HtmlContent: $it")
             }
         }
     )

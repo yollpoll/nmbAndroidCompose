@@ -25,7 +25,7 @@ data class Reply(
     val id: String,
     val img: String,
     val name: String,
-    val now: String,
+    val now: String?,
     val title: String,
     val userid: String
 )

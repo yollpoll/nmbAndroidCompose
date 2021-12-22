@@ -26,6 +26,7 @@ class LauncherRepository @Inject constructor(
             realUrl = url[0]
             Log.d(TAG, "loadRealUrl: $realUrl")
         } catch (e: Exception) {
+            realUrl = DIRECT_BASE_URL
             throw Exception("获取真实url失败:${e.message}")
         }
     }

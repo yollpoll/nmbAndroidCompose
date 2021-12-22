@@ -15,6 +15,7 @@ import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.net.FORUM_LIST
 import com.example.nmbcompose.net.launcherRetrofitFactory
+import com.example.nmbcompose.net.realCover
 import com.example.nmbcompose.repository.LauncherRepository
 import com.example.nmbcompose.util.launcherText
 import com.squareup.moshi.JsonAdapter
@@ -50,11 +51,11 @@ class LauncherViewModel @Inject constructor(
             try {
                 repository.loadRealUrl()
                 async { refreshCover() }
-                getForumList()
-                event.send(OneShotEvent.NavigateTo(MAIN))
+                async { getForumList() }
             } catch (e: Exception) {
                 Log.d(TAG, "getRealUrl error: ${e.message}")
             }
+            event.send(OneShotEvent.NavigateTo(MAIN))
         }
     }
 

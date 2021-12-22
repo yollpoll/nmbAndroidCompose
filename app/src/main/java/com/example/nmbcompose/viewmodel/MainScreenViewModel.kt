@@ -22,10 +22,7 @@ import com.example.nmbcompose.repository.HomeRepository
 import com.yollpoll.framework.extend.getList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,6 +39,11 @@ class MainScreenViewModel @Inject constructor(
     val currentDestination: LiveData<String> = _currentDestination
 
 
+    //标题栏
+    private var _title = MutableLiveData<String>("时间线")
+    val title: LiveData<String> = _title
+
+
     //板块列表
     val listForum = flow {
         getList<Forum>(KEY_FORUM_LIST)?.let {
@@ -54,10 +56,14 @@ class MainScreenViewModel @Inject constructor(
         when (action) {
             is MainAction.OnForumSelect -> {
                 _selectForum.value = action.forum
+                _title.value = _selectForum.value?.name ?: run { "匿名版" }
             }
             is MainAction.OnNavTo -> {
                 Log.d(TAG, "onAction: ${action.destination}")
                 _currentDestination.value = action.destination
+            }
+            is MainAction.OnArticleSelect -> {
+                _title.value = action.article.title
             }
         }
     }
@@ -65,5 +71,6 @@ class MainScreenViewModel @Inject constructor(
     sealed class MainAction : BaseUiAction() {
         class OnForumSelect(val forum: ForumDetail) : MainAction()
         class OnNavTo(val destination: String) : MainAction()
+        class OnArticleSelect(val article: ArticleItem) : MainAction()
     }
 }
