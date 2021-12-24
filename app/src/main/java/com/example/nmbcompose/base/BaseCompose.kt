@@ -10,6 +10,7 @@ package com.example.nmbcompose.base
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import com.example.nmbcompose.RouterData
 import com.example.nmbcompose.viewmodel.BaseViewModel
 import com.example.nmbcompose.viewmodel.LauncherViewModel
@@ -20,8 +21,9 @@ fun <T : BaseViewModel<*>> BaseScreen(
     viewModel: T,
     navTo: (RouterData) -> Unit,
     content: @Composable (T) -> Unit
-) = RouterScreen(viewModel = viewModel, navTo = navTo, content = content)
-
+) {
+    RouterScreen(viewModel = viewModel, navTo = navTo, content = content)
+}
 
 @Composable
 fun <T : BaseViewModel<*>> RouterScreen(

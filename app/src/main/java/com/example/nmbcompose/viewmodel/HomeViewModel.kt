@@ -10,6 +10,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.nmbcompose.IMAGE
 import com.example.nmbcompose.RouterData
 import com.example.nmbcompose.THREAD_DETAIL
 import com.example.nmbcompose.bean.*
@@ -88,6 +89,19 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }
+            is HomeAction.OnImageClick -> {
+                //查看大图
+                viewModelScope.launch {
+                    event.send(
+                        OneShotEvent.NavigateTo(
+                            RouterData(
+                                IMAGE,
+                                hashMapOf("url" to action.url.replace("/", "_"))
+                            )
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -119,6 +133,7 @@ class HomeViewModel @Inject constructor(
     sealed class HomeAction : BaseUiAction() {
         class OnForumSelect(val forum: ForumDetail) : HomeAction()
         class OnArticleClick(val item: ArticleItem) : HomeAction()
+        class OnImageClick(val url: String) : HomeAction()
     }
 }
 

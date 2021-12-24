@@ -18,14 +18,14 @@ data class ArticleItem(
 )
 
 data class Reply(
-    val admin: String,
-    val content: String,
-    val email: String,
-    val ext: String,
-    val id: String,
-    val img: String,
-    val name: String,
-    val now: String?,
-    val title: String,
-    val userid: String
+    val admin: String? = null,
+    val content: String? = null,
+    val email: String? = null,
+    val ext: String? = null,
+    val id: String? = null,
+    val img: String? = null,
+    val name: String? = null,
+    val now: String? = null,
+    val title: String? = null,
+    val userid: String? = null
 )

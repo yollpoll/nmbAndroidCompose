@@ -55,6 +55,7 @@ import com.example.nmbcompose.viewmodel.MainScreenViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.yollpoll.framework.message.liveeventbus.LiveEventBus
 import kotlinx.coroutines.launch
 
 private const val TAG = "MainScreen"
@@ -182,6 +183,11 @@ fun MainScreen(viewModel: MainScreenViewModel, navTo: RouteDispatcher) =
                         ) {
                             navController.popBackStack()
                         }
+                    }
+                }
+                composable(IMAGE.withParam()) {
+                    createArgument(navBackStackEntry = it) { param ->
+                        ImageScreen(url = param["url"])
                     }
                 }
             }

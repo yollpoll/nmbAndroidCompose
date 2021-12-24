@@ -3,6 +3,7 @@ package com.example.nmbcompose.net
 
 const val BASE_URL = "https://www.adnmb.com/"
 const val DIRECT_BASE_URL = "https://adnmb3.com/"//重定向以后的url，应该动态获取
+
 const val ROOT_URL = "Api/backupUrl"//重定向获取根url
 
 const val CDN_URL = "Api/getCdnPath"//图片cdn地址

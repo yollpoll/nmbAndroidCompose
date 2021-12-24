@@ -114,10 +114,18 @@ fun HomeScreenView(viewModel: HomeViewModel, onItemClick: (ArticleItem) -> Unit)
         val emptyRefresh =
             (threadItems.loadState.refresh == LoadState.Loading) && (threadItems.itemCount == 0)
         val refreshLoading = threadItems.loadState.refresh == LoadState.Loading
-        HomeView(threadItems, emptyRefresh, refreshLoading, { threadItems.refresh() }) {
-            viewModel.onAction(HomeViewModel.HomeAction.OnArticleClick(it))
-            onItemClick.invoke(it)
-        }
+        HomeView(
+            threadItems,
+            emptyRefresh,
+            refreshLoading,
+            { threadItems.refresh() },
+            onImageClick = {
+                viewModel.onAction(HomeViewModel.HomeAction.OnImageClick(it))
+            },
+            onItemClick = {
+                viewModel.onAction(HomeViewModel.HomeAction.OnArticleClick(it))
+                onItemClick.invoke(it)
+            })
     }
 }
 
@@ -133,14 +141,15 @@ fun HomeView(
     empty: Boolean,
     loading: Boolean,
     onRefresh: () -> Unit,
-    onItemClick: (ArticleItem) -> Unit
+    onItemClick: ((ArticleItem) -> Unit)? = null,
+    onImageClick: ((String) -> Unit)? = null
 ) {
     LoadingContent(
         empty = empty,
         emptyContent = { FullScreenLoading() },
         loading = loading,
         onRefresh = { onRefresh.invoke() }) {
-        ThreadList(threadItems, onItemClick)
+        ThreadList(threadItems, onImageClick = onImageClick, onItemClick ?: {})
     }
 }
 
@@ -150,7 +159,11 @@ fun HomeView(
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun ThreadList(threadItems: LazyPagingItems<ArticleItem>, onItemClick: (ArticleItem) -> Unit) {
+fun ThreadList(
+    threadItems: LazyPagingItems<ArticleItem>,
+    onImageClick: ((String) -> Unit)? = null,
+    onItemClick: (ArticleItem) -> Unit
+) {
     LazyColumn {
         items(threadItems, key = {
             it.id
@@ -158,7 +171,7 @@ fun ThreadList(threadItems: LazyPagingItems<ArticleItem>, onItemClick: (ArticleI
             if (item == null) {
                 ThreadPlaceHolder()
             } else {
-                ThreadItem(item, onItemClick)
+                ThreadItem(item, onImageClick = onImageClick, onItemClick)
             }
         }
     }
@@ -201,6 +214,8 @@ fun SwipeItem(
         if (isExpended) white else
             nmbAccentColor,
     )
+
+
     Box(contentAlignment = Alignment.CenterEnd) {
         Box(
             modifier = Modifier
@@ -278,7 +293,11 @@ fun SwipeItem(
 @ExperimentalMaterialApi
 @ExperimentalFoundationApi
 @Composable
-fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
+fun ThreadItem(
+    item: ArticleItem,
+    onImageClick: ((String) -> Unit)? = null,
+    onClick: (ArticleItem) -> Unit,
+) {
     var isExpanded by remember {
         mutableStateOf(false)
     }
@@ -341,7 +360,10 @@ fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
                                 modifier = Modifier
                                     .width(100.dp)
                                     .height(100.dp)
-                                    .clip(RoundedCornerShape(10)),
+                                    .clip(RoundedCornerShape(10))
+                                    .clickable {
+                                        onImageClick?.invoke("${item.img}${item.ext}")
+                                    },
                                 contentScale = ContentScale.Crop,
                             )
                         }
@@ -370,7 +392,7 @@ fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
                     Column {
                         item.replys.forEach {
                             Divider()
-                            replyItem(it)
+                            replyItem(it, onImageClick = onImageClick)
                         }
                     }
                 }
@@ -383,7 +405,7 @@ fun ThreadItem(item: ArticleItem, onClick: (ArticleItem) -> Unit) {
 }
 
 @Composable
-fun replyItem(item: Reply) {
+fun replyItem(item: Reply, onImageClick: ((String) -> Unit)? = null) {
     Row(modifier = Modifier.padding(10.dp)) {
         item.apply {
             if (!img.isNullOrEmpty()) {
@@ -396,7 +418,10 @@ fun replyItem(item: Reply) {
                     modifier = Modifier
                         .width(100.dp)
                         .height(100.dp)
-                        .clip(RoundedCornerShape(10)),
+                        .clip(RoundedCornerShape(10))
+                        .clickable {
+                            onImageClick?.invoke("${item.img}${item.ext}")
+                        },
                     contentScale = ContentScale.Crop,
                 )
             }
@@ -416,7 +441,7 @@ fun replyItem(item: Reply) {
                     }
                 })
             }
-            HtmlContent(item.id, item.content)
+            HtmlContent(item.id ?: "", item.content ?: "")
         }
     }
 }

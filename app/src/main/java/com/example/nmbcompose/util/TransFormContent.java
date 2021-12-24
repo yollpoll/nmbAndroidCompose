@@ -47,7 +47,7 @@ public class TransFormContent {
                     spannableString.setSpan(new ClickableSpan() {
                         @Override
                         public void onClick(View widget) {
-                            onClickListener.onClick(group);
+                            onClickListener.onClick(group.substring(5));
                         }
                     }, matcher.start(), matcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }

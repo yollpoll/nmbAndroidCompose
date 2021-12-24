@@ -16,6 +16,7 @@ const val LAUNCHER = "launcher"//中间页面
 const val HOME = "home"//首页
 const val MAIN = "MAIN"
 const val THREAD_DETAIL = "thread_detail"//串内
+const val IMAGE = "image"//大图
 
 //扩展函数
 fun String.withParam(): String {
