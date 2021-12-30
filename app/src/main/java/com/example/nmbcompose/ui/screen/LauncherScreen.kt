@@ -56,14 +56,13 @@ fun LauncherScreenView(launcherText: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = if (isSystemInDarkTheme()) nmbAccentColor else primary),
+            .background(color = if (isSystemInDarkTheme()) MaterialTheme.colors.surface else primary),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
         Text(text = "加载中。。。", color = white, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(10.dp))
-
         Text(text = launcherText, color = white)
     }
 }

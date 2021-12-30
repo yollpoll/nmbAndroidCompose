@@ -24,7 +24,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.*
 import androidx.navigation.navigation
 import com.example.nmbcompose.ui.screen.ArticleDetailScreen
-import com.example.nmbcompose.ui.screen.HomeScreen
 import com.example.nmbcompose.ui.screen.LauncherScreen
 import com.example.nmbcompose.ui.screen.MainScreen
 import com.example.nmbcompose.ui.theme.NmbComposeTheme
@@ -84,7 +83,9 @@ fun App(viewModel: MainViewModel) {
                     }
                     val route = "${url}${param?.run { "/${this}" } ?: ""}"
                     Log.d(TAG, "invoke: $route")
-                    navController.navigate(route = route) {
+                    navController.navigate(route = route)
+                    if (data.popBackStack) {
+                        navController.popBackStack()
                     }
                 }
             }
@@ -116,10 +117,12 @@ fun App(viewModel: MainViewModel) {
 //在 NavGraph 全局范围使用 Hilt 创建 ViewModel
 @Composable
 inline fun <reified VM : BaseViewModel<*>> createViewModel(
-    args: Map<String, String> = hashMapOf()
+    args: Map<String, String>? = hashMapOf()
 ): VM {
     val vm = hiltViewModel<VM>()
-    vm.arguments = args
+    args?.apply {
+        vm.arguments = this
+    }
     return vm
 }
 

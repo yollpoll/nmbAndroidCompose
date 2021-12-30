@@ -50,7 +50,6 @@ import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.Reply
 import com.example.nmbcompose.net.imgThumbUrl
 import com.example.nmbcompose.ui.theme.nmbAccentColor
-import com.example.nmbcompose.ui.theme.nmbBg
 import com.example.nmbcompose.ui.theme.nmbSecondBg
 import com.example.nmbcompose.ui.widget.*
 import com.example.nmbcompose.util.DateTools

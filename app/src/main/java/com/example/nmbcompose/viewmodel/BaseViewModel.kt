@@ -41,7 +41,7 @@ abstract class BaseViewModel<T : BaseUiAction>(context: Context) :
         }
 
         //返回
-        class BackTo constructor(data: RouterData?) : OneShotEvent<RouterData?>(data) {
+        class BackTo constructor(data: RouterData) : OneShotEvent<RouterData>(data) {
             constructor(route: String) : this(RouterData(route, null))
         }
     }

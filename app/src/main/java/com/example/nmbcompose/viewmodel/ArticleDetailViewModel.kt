@@ -45,10 +45,7 @@ class ArticleDetailViewModel @Inject constructor(
 
 
     val articleDetail by lazy {
-        repository.getArticleDetail(id ?: "").map {
-            MessageManager.getInstance().sendMessage(EVENT_TITLE, it?.title ?: "无标题")
-            return@map it
-        }
+        repository.getArticleDetail(id ?: "")
     }
 
     //pagingFlow
@@ -57,7 +54,8 @@ class ArticleDetailViewModel @Inject constructor(
     }.flow.map {
         it.filter { it ->
             cacheList.add(it)
-            it.id != "9999999"
+//            it.id != "9999999"
+            true
         }
     }.cachedIn(viewModelScope)
 

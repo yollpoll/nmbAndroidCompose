@@ -21,4 +21,5 @@ val white = Color(0xFFFFFFFF)
 
 val nmbBg = Color(0XFFFFFFED)
 val nmbSecondBg = Color(0xFFF0E0D6)
+val darkBg = Color(0xff313131)
 val nmbAccentColor = Color(0xFF8C1918)

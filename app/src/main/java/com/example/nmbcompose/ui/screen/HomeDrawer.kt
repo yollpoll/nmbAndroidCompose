@@ -8,6 +8,7 @@
 
 package com.example.nmbcompose.ui.screen
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -62,13 +63,18 @@ class DrawerLeftShape : Shape {
  * 抽屉内容
  */
 @Composable
-fun DrawerLeft(list: List<Forum>, onClick: (ForumDetail) -> Unit) {
+fun DrawerLeft(
+    list: List<Forum>,
+    coverUrl: String?,
+    onCoverClick: ((String) -> Unit)? = null,
+    onClick: ((ForumDetail) -> Unit)? = null
+) {
     Column {
-        DrawerCover()
+        DrawerCover(coverUrl, onCoverClick)
 //        Divider()
 //        SettingContent()
         Divider()
-        DrawerForumList(list, onClick)
+        DrawerForumList(list, onClick ?: {})
     }
 }
 
@@ -95,8 +101,8 @@ fun DrawerSettingItem(title: String, onClick: () -> Unit) {
  * 封面
  */
 @Composable
-fun DrawerCover() {
-    if (realCover.isNullOrEmpty()) {
+fun DrawerCover(url: String?, onClick: ((String) -> Unit)? = null) {
+    if (url.isNullOrEmpty()) {
         Image(
             painter = painterResource(id = R.mipmap.ic_img_loading),
             contentDescription = "",
@@ -107,16 +113,17 @@ fun DrawerCover() {
         )
     } else {
         Image(
-            painter = rememberCoilPainter(request = realCover),
+            painter = rememberCoilPainter(request = url),
             contentDescription = "",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp),
+                .height(200.dp)
+                .clickable {
+                    onClick?.invoke(url)
+                },
             contentScale = ContentScale.Crop
         )
     }
-
-
 }
 
 /**

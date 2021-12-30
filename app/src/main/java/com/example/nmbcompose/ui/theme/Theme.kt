@@ -1,5 +1,6 @@
 package com.example.nmbcompose.ui.theme
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
@@ -8,17 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorPalette = darkColors(
-    primary = primary,
-    primaryVariant = primaryVariant,
-    secondary = nmbSecondBg,
-    background = black,
-    surface = nmbAccentColor,
+    primary = darkBg,
 )
 
 private val LightColorPalette = lightColors(
     primary = primary,
     primaryVariant = primaryVariant,
-    secondary = nmbSecondBg,
+    secondary = primaryVariant,
     background = nmbBg,
     surface = nmbBg,
     /* Other default colors to override
@@ -40,7 +37,7 @@ fun NmbComposeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compos
     }
 
     MaterialTheme(
-        colors = LightColorPalette,
+        colors = colors,
         typography = Typography,
         shapes = Shapes,
         content = content

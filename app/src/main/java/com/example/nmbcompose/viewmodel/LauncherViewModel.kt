@@ -50,7 +50,7 @@ class LauncherViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.loadRealUrl()
-                async { refreshCover() }
+//                async { refreshCover() }
                 async { getForumList() }
             } catch (e: Exception) {
                 Log.d(TAG, "getRealUrl error: ${e.message}")

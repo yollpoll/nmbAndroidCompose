@@ -18,12 +18,14 @@ import com.example.nmbcompose.constant.KEY_FORUM_LIST
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.di.HomeRepositoryAnnotation
 import com.example.nmbcompose.net.TIME_LINE_ID
+import com.example.nmbcompose.net.imgUrl
 import com.example.nmbcompose.paging.BasePagingSource
 import com.example.nmbcompose.paging.getCommonPager
 import com.example.nmbcompose.repository.HomeRepository
 import com.squareup.moshi.JsonClass
 import com.yollpoll.framework.extend.*
 import com.yollpoll.framework.message.liveeventbus.Observable
+import com.yollpoll.framework.utils.ToastUtil
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,6 +38,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.math.log
 
 //关于hilt，如果在
 @HiltViewModel
@@ -45,35 +48,16 @@ class HomeViewModel @Inject constructor(
 ) :
     BaseViewModel<HomeViewModel.HomeAction>(context) {
 
-
     private var _threadPager =
-        MutableLiveData(getCommonPager { return@getCommonPager repository.getTimeLinePagingSource() })
+        MutableLiveData(getCommonPager {
+            if (null == arguments["forumId"] || arguments["forumId"] == TIME_LINE_ID)
+                repository.getTimeLinePagingSource()
+            else repository.getThreadsPagingSource(arguments["forumId"]!!)
+        })
     val threadFLow = _threadPager.value!!.flow.cachedIn(viewModelScope)
-
-    private var _selectForum = MutableLiveData<ForumDetail>()
-    val selectForum: LiveData<ForumDetail> = _selectForum
-
-    private var _empty = MutableLiveData<Boolean>(true)//当前页面是否是空的（展示一个加载条）
-    val empty: LiveData<Boolean> = _empty
-
-    private var _load = MutableLiveData<Boolean>(true)//当前页面数据是否正在加载
-    val load: LiveData<Boolean> = _load
-
-
-    val listForum = flow<List<Forum>> {
-        getList<Forum>(KEY_FORUM_LIST)?.let {
-            _selectForum.value = it.first().forums.first()
-            emit(it)
-        }
-    }
 
     override fun onAction(action: HomeAction) {
         when (action) {
-            is HomeAction.OnForumSelect -> {
-                _empty.value = true
-                _selectForum.value = action.forum
-                loadData(action.forum.id)
-            }
             is HomeAction.OnArticleClick -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     event.send(
@@ -96,20 +80,13 @@ class HomeViewModel @Inject constructor(
                         OneShotEvent.NavigateTo(
                             RouterData(
                                 IMAGE,
-                                hashMapOf("url" to action.url.replace("/", "_"))
+                                hashMapOf("url" to (imgUrl + action.url).replace("/", "_"))
                             )
                         )
                     )
                 }
             }
         }
-    }
-
-    /**
-     * 刷新数据
-     */
-    fun refresh() {
-        loadData(_selectForum.value?.id)
     }
 
     /**
@@ -131,7 +108,6 @@ class HomeViewModel @Inject constructor(
 
 
     sealed class HomeAction : BaseUiAction() {
-        class OnForumSelect(val forum: ForumDetail) : HomeAction()
         class OnArticleClick(val item: ArticleItem) : HomeAction()
         class OnImageClick(val url: String) : HomeAction()
     }

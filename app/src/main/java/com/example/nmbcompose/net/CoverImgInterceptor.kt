@@ -12,6 +12,7 @@ class CoverImgInterceptor : Interceptor {
             val response = chain.proceed(chain.request())
             val realUrl = response.request.url.toUrl().toString()
             if (orgUrl == COVER) {
+                Log.d(TAG, "intercept: realUrl$realUrl")
                 //拦截到封面请求
                 realCover = realUrl
             }

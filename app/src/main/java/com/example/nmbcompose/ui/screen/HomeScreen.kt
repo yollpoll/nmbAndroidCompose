@@ -4,6 +4,7 @@ import android.graphics.drawable.LevelListDrawable
 import android.text.TextUtils
 import android.util.Log
 import android.widget.ImageButton
+import android.widget.Space
 import android.widget.TextView
 import androidx.annotation.Dimension.DP
 import androidx.compose.animation.animateColorAsState
@@ -14,6 +15,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,14 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -71,6 +74,7 @@ import com.example.nmbcompose.bean.Reply
 import com.example.nmbcompose.constant.TAG
 import com.example.nmbcompose.net.imgThumbUrl
 import com.example.nmbcompose.net.realCover
+import com.example.nmbcompose.ui.common.DrawerNestScrollConnection
 import com.example.nmbcompose.ui.theme.*
 import com.example.nmbcompose.ui.widget.FullScreenLoading
 import com.example.nmbcompose.ui.widget.LoadingContent
@@ -91,25 +95,24 @@ val DRAWER_LAYOUT_WIDTH = 700.dp
 @ExperimentalMaterialApi
 @Composable
 fun HomeScreen(
+    threadItems: LazyPagingItems<ArticleItem>,
     viewModel: HomeViewModel,
     navTo: RouteDispatcher,
     onItemClick: (ArticleItem) -> Unit
 ) =
     BaseScreen(viewModel = viewModel, navTo = navTo) {
-        HomeScreenView(viewModel, onItemClick)
+        HomeScreenView(threadItems, viewModel, onItemClick)
     }
 
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
 @Composable
-fun HomeScreenView(viewModel: HomeViewModel, onItemClick: (ArticleItem) -> Unit) {
-//    var viewState = viewModel.viewState.collectAsState()
-    val listForum = viewModel.listForum.collectAsState(initial = arrayListOf())
-    val selectForum = viewModel.selectForum.observeAsState()
-    val threadItems = viewModel.threadFLow.collectAsLazyPagingItems()
-
-    val state = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
+fun HomeScreenView(
+    threadItems: LazyPagingItems<ArticleItem>,
+    viewModel: HomeViewModel,
+    onItemClick: (ArticleItem) -> Unit
+) {
+//    val threadItems = viewModel.threadFLow.collectAsLazyPagingItems()
     Scaffold {
         val emptyRefresh =
             (threadItems.loadState.refresh == LoadState.Loading) && (threadItems.itemCount == 0)
@@ -127,6 +130,7 @@ fun HomeScreenView(viewModel: HomeViewModel, onItemClick: (ArticleItem) -> Unit)
                 onItemClick.invoke(it)
             })
     }
+
 }
 
 
@@ -165,9 +169,7 @@ fun ThreadList(
     onItemClick: (ArticleItem) -> Unit
 ) {
     LazyColumn {
-        items(threadItems, key = {
-            it.id
-        }) { item ->
+        items(threadItems) { item ->
             if (item == null) {
                 ThreadPlaceHolder()
             } else {
@@ -200,6 +202,7 @@ fun SwipeItem(
 
     val swipeAbleState = rememberSwipeableState(initialValue = ItemStatus.CLOSE)
 
+
     val sizePx = with(LocalDensity.current) { -squareSize.toPx() }
 
     val anchors = mapOf(0f to ItemStatus.CLOSE, sizePx to ItemStatus.OPEN)
@@ -215,8 +218,9 @@ fun SwipeItem(
             nmbAccentColor,
     )
 
-
-    Box(contentAlignment = Alignment.CenterEnd) {
+    Box(
+        contentAlignment = Alignment.CenterEnd,
+    ) {
         Box(
             modifier = Modifier
                 .swipeable(
@@ -227,7 +231,8 @@ fun SwipeItem(
                 )
                 .offset {
                     IntOffset(swipeAbleState.offset.value.roundToInt(), 0)
-                },
+                }
+
         ) {
             content.invoke()
         }
@@ -303,8 +308,9 @@ fun ThreadItem(
     }
     //颜色变化
     val surfaceColor: Color by animateColorAsState(
-        if (isExpanded) nmbSecondBg else
-            nmbBg,
+        if (isSystemInDarkTheme()) MaterialTheme.colors.surface else {
+            if (isExpanded) nmbSecondBg else nmbBg
+        }
     )
     //高度变化
     val surfaceElevation: Dp by animateDpAsState(
@@ -328,10 +334,10 @@ fun ThreadItem(
         modifier = Modifier
             .animateContentSize()
             .padding(surfacePadding)
-
     ) {
         SwipeItem(isExpanded) {
             Column(
+                verticalArrangement = Arrangement.Bottom,
                 modifier = Modifier
                     .combinedClickable(
                         onClick = {
@@ -348,7 +354,14 @@ fun ThreadItem(
                     )
                     .fillMaxWidth()
             ) {
-                Row(modifier = Modifier.padding(10.dp)) {
+                Row(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .requiredHeightIn(
+                            min = if (isExpanded) Dp.Infinity else 100.dp,
+                            max = if (isExpanded) Dp.Infinity else 200.dp
+                        ), verticalAlignment = Alignment.Top
+                ) {
                     item.apply {
                         if (!img.isNullOrEmpty()) {
                             Image(
@@ -368,20 +381,23 @@ fun ThreadItem(
                             )
                         }
                     }
-
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column(
-                        Modifier
-                            .padding(all = 10.dp)
+                        verticalArrangement = Arrangement.SpaceAround,
                     ) {
-                        //使用textview
-                        Text(text = item.title)
-                        Text(text = item.userid, color = item.let {
-                            if (it.admin == "0") {
-                                return@let Color.DarkGray
-                            } else {
-                                return@let Color.Red
-                            }
-                        })
+                        Row {
+                            //使用textview
+                            Text(text = item.title, fontSize = 10.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(text = item.userid, fontSize = 10.sp, color = item.let {
+                                if (it.admin == "0") {
+                                    return@let Color.DarkGray
+                                } else {
+                                    return@let Color.Red
+                                }
+                            })
+                        }
+
                         HtmlContent(item.id, item.content, isExpanded)
                     }
                 }

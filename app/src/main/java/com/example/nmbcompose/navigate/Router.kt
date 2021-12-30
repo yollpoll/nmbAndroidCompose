@@ -6,7 +6,11 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 
 //路由数据
-data class RouterData(val route: String, val params: Map<String, String>?)
+data class RouterData(
+    val route: String,
+    val params: Map<String, String>?,
+    var popBackStack: Boolean = false
+)
 
 //路由分发
 abstract class RouteDispatcher : (RouterData) -> Unit

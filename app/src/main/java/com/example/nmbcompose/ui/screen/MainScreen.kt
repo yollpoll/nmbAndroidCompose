@@ -10,12 +10,10 @@ package com.example.nmbcompose.ui.screen
 
 import android.os.Bundle
 import android.util.Log
+import androidx.collection.arrayMapOf
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,27 +21,32 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.nmbcompose.*
 import com.example.nmbcompose.R
 import com.example.nmbcompose.base.BaseScreen
@@ -51,12 +54,18 @@ import com.example.nmbcompose.bean.Forum
 import com.example.nmbcompose.bean.ForumDetail
 import com.example.nmbcompose.net.realCover
 import com.example.nmbcompose.ui.widget.TitleBar
+import com.example.nmbcompose.viewmodel.HomeViewModel
 import com.example.nmbcompose.viewmodel.MainScreenViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.yollpoll.framework.extend.toJson
+import com.yollpoll.framework.extend.toJsonBean
 import com.yollpoll.framework.message.liveeventbus.LiveEventBus
+import com.yollpoll.framework.utils.ToastUtil
 import kotlinx.coroutines.launch
+import okhttp3.Route
+import kotlin.math.log
 
 private const val TAG = "MainScreen"
 
@@ -73,10 +82,19 @@ fun MainScreen(viewModel: MainScreenViewModel, navTo: RouteDispatcher) =
         val selectForum = viewModel.selectForum.observeAsState()
         val currentDestination = viewModel.currentDestination.observeAsState()
         val title = viewModel.title.observeAsState()
+        val coverUrl = viewModel.cover.observeAsState()
+        val lazyItems = viewModel.threadFLow.collectAsLazyPagingItems()
+        val pager = viewModel.threadPager.observeAsState()
+
+
+        var refreshList by remember {
+            return@remember mutableStateOf(false)
+        }
 
         val state = rememberScaffoldState()
         val scope = rememberCoroutineScope()
-        //路由
+
+        //这个路由是属于本screen内部嵌套的路由
         val navController = rememberNavController()
         val dispatcher = object : RouteDispatcher() {
             override fun invoke(data: RouterData) {
@@ -98,8 +116,15 @@ fun MainScreen(viewModel: MainScreenViewModel, navTo: RouteDispatcher) =
         }
         //路由监听
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
-            viewModel.onAction(MainScreenViewModel.MainAction.OnNavTo(destination.route ?: ""))
+            Log.d(TAG, "MainScreen onNav: ${destination}")
+            viewModel.onAction(
+                MainScreenViewModel.MainAction.OnNavTo(
+                    destination.route ?: "",
+                    arguments?.get("param") as String?
+                )
+            )
         }
+
         Scaffold(
             scaffoldState = state,
             topBar = {
@@ -125,47 +150,55 @@ fun MainScreen(viewModel: MainScreenViewModel, navTo: RouteDispatcher) =
             drawerContentColor = contentColorFor(MaterialTheme.colors.background),
             drawerShape = DrawerLeftShape(),
             drawerContent = {
-                DrawerLeft(listForum.value) {
+                DrawerLeft(listForum.value, coverUrl.value, onCoverClick = {
+                    scope.launch {
+                        state.drawerState.close()
+                    }
+                    dispatcher.invoke(
+                        RouterData(
+                            IMAGE,
+                            hashMapOf("url" to it.replace("/", "_"))
+                        )
+                    )
+                }) {
                     viewModel.onAction(MainScreenViewModel.MainAction.OnForumSelect(it))
                     scope.launch {
                         state.drawerState.close()
                     }
                 }
             },
+            drawerGesturesEnabled = currentDestination.value == HOME,
             floatingActionButton = {
-                Surface(
-                    elevation = 3.dp,
-                    shape = CircleShape,
-                    color = MaterialTheme.colors.primary,
-                    modifier = Modifier
-                        .combinedClickable(
-                            onClick = {
-                                scope.launch {
-                                    if (state.drawerState.isOpen) {
-                                        state.drawerState.close()
-                                    } else {
-                                        state.drawerState.open()
-                                    }
-                                }
+                if (currentDestination.value == HOME) {
+                    Surface(
+                        elevation = 3.dp,
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .clickable {
+                                refreshList = true
                             },
-                            onLongClick = {},
-                            onDoubleClick = {},
-                        ),
-                ) {
-                    Icon(
-                        Icons.Rounded.Edit,
-                        contentDescription = "action menu",
-                        tint = MaterialTheme.colors.secondary,
-                        modifier = Modifier.padding(20.dp),
-                    )
+                    ) {
+                        Icon(
+                            Icons.Rounded.Refresh,
+                            contentDescription = "action menu",
+                            tint = MaterialTheme.colors.secondary,
+                            modifier = Modifier.padding(20.dp),
+                        )
+                    }
                 }
             },
-            isFloatingActionButtonDocked = true
+            isFloatingActionButtonDocked = true,
         ) {
+            if (refreshList && lazyItems.loadState.refresh != LoadState.Loading) {
+                Log.d(TAG, "MainScreen: refresh " + lazyItems.loadState.refresh)
+                lazyItems.refresh()
+                refreshList = false
+            }
             NavHost(navController = navController, startDestination = HOME) {
                 composable(HOME) {
-                    createArgument(it) {
+                    createArgument(it) { args ->
                         HomeScreen(
+                            pager.value?.flow?.collectAsLazyPagingItems()!!,
                             createViewModel(),
                             dispatcher,
                         ) { it ->
